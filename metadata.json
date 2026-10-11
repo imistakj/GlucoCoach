@@ -1,0 +1,6 @@
+{
+  "name": "GlucoCoach Qatar",
+  "description": "Bilingual diabetes prevention and point-of-decision assistant for Qatar. Smart supermarket basket scanner, restaurant meal guidance, and Heart Guard emergency triage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

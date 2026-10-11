@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with emergency medical identification and diabetic management targets",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 150 },
+        "qatarId": { "type": "string", "maxLength": 20 },
+        "healthCardNumber": { "type": "string", "maxLength": 30 },
+        "dob": { "type": "string", "maxLength": 20 },
+        "bloodType": { "type": "string", "maxLength": 10 },
+        "diabeticStatus": { "type": "string", "enum": ["pre-diabetes", "type-2", "preventative", "type-1"] },
+        "targetDailyAddedSugar": { "type": "number" },
+        "targetDailyCarbs": { "type": "number" },
+        "medications": { "type": "array" },
+        "allergies": { "type": "array" },
+        "primaryDoctor": { "type": "string", "maxLength": 150 },
+        "healthCenter": { "type": "string", "maxLength": 150 },
+        "chronicConditions": { "type": "array" },
+        "emergencyNotes": { "type": "string", "maxLength": 500 },
+        "preferredHospital": { "type": "string", "maxLength": 150 },
+        "insulinDependent": { "type": "boolean" },
+        "emergencyContact": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "qatarId", "healthCardNumber", "bloodType", "diabeticStatus"]
+    },
+    "RecordedMeal": {
+      "title": "RecordedMeal",
+      "description": "Recorded meal item consumed by the user with nutritional breakdown and glucose association",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 200 },
+        "nameAr": { "type": "string", "maxLength": 200 },
+        "mealType": { "type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"] },
+        "takenAt": { "type": "string" },
+        "displayTime": { "type": "string", "maxLength": 50 },
+        "displayDate": { "type": "string", "maxLength": 50 },
+        "sugarGrams": { "type": "number" },
+        "addedSugarGrams": { "type": "number" },
+        "carbsGrams": { "type": "number" },
+        "proteinGrams": { "type": "number" },
+        "calories": { "type": "number" },
+        "spikeRisk": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "glucoseAtMeal": { "type": "number" },
+        "glucoseTiming": { "type": "string", "maxLength": 50 },
+        "imageUrl": { "type": "string" },
+        "source": { "type": "string", "enum": ["ai_photo", "qr_scan", "kitchen_order", "quick_log", "catalog"] },
+        "notes": { "type": "string", "maxLength": 500 },
+        "userId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "name", "mealType", "takenAt", "sugarGrams", "carbsGrams"]
+    },
+    "BloodSugarLog": {
+      "title": "BloodSugarLog",
+      "description": "Recorded blood glucose reading with timestamp and clinical triage status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "glucoseLevel": { "type": "number" },
+        "timing": { "type": "string", "enum": ["fasting", "pre_meal", "post_meal", "bedtime", "random"] },
+        "timestamp": { "type": "string" },
+        "date": { "type": "string", "maxLength": 30 },
+        "feelingRating": { "type": "string", "enum": ["great", "good", "tired", "unwell"] },
+        "triageLevel": { "type": "string", "enum": ["GREEN", "AMBER", "RED"] },
+        "symptoms": { "type": "object" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "userId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "glucoseLevel", "timestamp", "triageLevel"]
+    },
+    "KitchenFoodOrder": {
+      "title": "KitchenFoodOrder",
+      "description": "Order submitted to a local Qatari healthy kitchen partner",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "meal": { "type": "object" },
+        "quantity": { "type": "number" },
+        "totalQAR": { "type": "number" },
+        "status": { "type": "string", "enum": ["confirmed", "preparing", "on_the_way", "delivered"] },
+        "customerName": { "type": "string", "maxLength": 150 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "deliveryZone": { "type": "string", "maxLength": 100 },
+        "deliveryAddress": { "type": "string", "maxLength": 250 },
+        "specialNotes": { "type": "string", "maxLength": 500 },
+        "selectedMods": { "type": "array" },
+        "placedAt": { "type": "string" },
+        "estimatedDeliveryTime": { "type": "string", "maxLength": 100 },
+        "userId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "quantity", "totalQAR", "status", "placedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/profile/medical": {
+      "schema": "UserProfile",
+      "description": "User profile and emergency medical data"
+    },
+    "/users/{userId}/recordedMeals/{mealId}": {
+      "schema": "RecordedMeal",
+      "description": "Recorded meals for user nutrition and adaptive recommendation tracking"
+    },
+    "/users/{userId}/bloodSugarLogs/{logId}": {
+      "schema": "BloodSugarLog",
+      "description": "Blood glucose readings and clinical triage history"
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": "KitchenFoodOrder",
+      "description": "Healthy food delivery orders placed with Qatari kitchens"
+    }
+  }
+}

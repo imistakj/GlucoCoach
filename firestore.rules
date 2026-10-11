@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Profile & Emergency Medical Record
+    match /users/{userId}/profile/{docId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 150
+        && incoming().qatarId is string && incoming().qatarId.size() <= 20;
+      allow update: if isOwner(userId)
+        && incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 150
+        && incoming().diff(existing()).affectedKeys().hasAny(['name', 'qatarId', 'healthCardNumber', 'dob', 'bloodType', 'diabeticStatus', 'targetDailyAddedSugar', 'targetDailyCarbs', 'medications', 'allergies', 'primaryDoctor', 'healthCenter', 'chronicConditions', 'emergencyNotes', 'preferredHospital', 'insulinDependent', 'emergencyContact', 'updatedAt']);
+      allow delete: if isOwner(userId);
+    }
+
+    // User Recorded Meals
+    match /users/{userId}/recordedMeals/{mealId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 200
+        && incoming().mealType in ['breakfast', 'lunch', 'dinner', 'snack']
+        && incoming().sugarGrams is number;
+      allow update: if isOwner(userId)
+        && incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 200;
+      allow delete: if isOwner(userId);
+    }
+
+    // User Blood Sugar Readings & Check-ins
+    match /users/{userId}/bloodSugarLogs/{logId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && incoming().glucoseLevel is number
+        && incoming().triageLevel in ['GREEN', 'AMBER', 'RED'];
+      allow update: if isOwner(userId)
+        && incoming().glucoseLevel is number;
+      allow delete: if isOwner(userId);
+    }
+
+    // User Kitchen Food Orders
+    match /users/{userId}/orders/{orderId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && incoming().quantity is number && incoming().quantity > 0
+        && incoming().totalQAR is number;
+      allow update: if isOwner(userId)
+        && incoming().status in ['confirmed', 'preparing', 'on_the_way', 'delivered'];
+      allow delete: if isOwner(userId);
+    }
+  }
+}
