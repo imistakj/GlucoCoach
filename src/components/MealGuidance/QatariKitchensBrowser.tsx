@@ -24,6 +24,7 @@ export const QatariKitchensBrowser: React.FC<QatariKitchensBrowserProps> = ({
   onSelectMealForOrder,
 }) => {
   const { lang, t, orders } = useApp();
+  const l = lang === 'ar' ? 'ar' : 'en';
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedKitchenId, setSelectedKitchenId] = useState<string>('all');
 
@@ -67,7 +68,7 @@ export const QatariKitchensBrowser: React.FC<QatariKitchensBrowserProps> = ({
             <Truck className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
             <span className="text-slate-300">
               {lang === 'ar' ? 'طلبك الأخير:' : 'Latest Order:'}{' '}
-              <strong className="text-emerald-400 font-bold">{latestOrder.meal.name[lang]}</strong>
+              <strong className="text-emerald-400 font-bold">{latestOrder.meal.name[l]}</strong>
             </span>
           </div>
         )}
@@ -104,7 +105,7 @@ export const QatariKitchensBrowser: React.FC<QatariKitchensBrowserProps> = ({
                     </span>
                   </div>
                   <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
-                    {kitchen.name[lang]}
+                    {kitchen.name[l]}
                   </h4>
                 </div>
 
@@ -155,7 +156,7 @@ export const QatariKitchensBrowser: React.FC<QatariKitchensBrowserProps> = ({
             <div className="relative h-36 overflow-hidden">
               <img
                 src={meal.imageUrl}
-                alt={meal.name[lang]}
+                alt={meal.name[l]}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
@@ -172,13 +173,13 @@ export const QatariKitchensBrowser: React.FC<QatariKitchensBrowserProps> = ({
             <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 block truncate">
-                  {meal.deliveryKitchenName[lang]}
+                  {meal.deliveryKitchenName[l]}
                 </span>
                 <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1 mt-0.5">
-                  {meal.name[lang]}
+                  {meal.name[l]}
                 </h4>
                 <p className="text-[11px] text-slate-300 mt-1 line-clamp-2 leading-relaxed">
-                  {meal.description[lang]}
+                  {meal.description[l]}
                 </p>
               </div>
 

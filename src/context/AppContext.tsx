@@ -11,12 +11,13 @@ import {
   KitchenFoodOrder,
   RecordedMeal,
   NextMealSuggestion,
+  PersonalizedNextMealPlan,
   MealType,
 } from '../types';
 import { QATAR_SUPERMARKET_PRODUCTS } from '../data/qatarProducts';
 import { QATAR_HEALTHY_MEALS } from '../data/qatarKitchens';
 import { translations } from '../data/translations';
-import { generateNextMealSuggestion } from '../services/nextMealEngine';
+import { generateNextMealSuggestion, generatePersonalizedNextMealPlan } from '../services/nextMealEngine';
 import {
   persistUserProfile,
   fetchUserProfile,
@@ -50,6 +51,9 @@ interface AppContextType {
   currentSugarLevel: number;
   setCurrentSugarLevel: (val: number) => void;
   nextMealSuggestion: NextMealSuggestion;
+  nextMealPlan: PersonalizedNextMealPlan;
+  todaySugarIntake: number;
+  remainingSugarBudget: number;
   isMealLoggerOpen: boolean;
   setIsMealLoggerOpen: (open: boolean) => void;
   
@@ -523,21 +527,20 @@ const initialRecordedMeals: RecordedMeal[] = [
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Language & Direction
+  // Language & Direction (Arabic & English Only)
   const [lang, setLangState] = useState<Language>(() => {
     const saved = localStorage.getItem('glucocoach_lang');
-    return (saved as Language) || 'en';
+    return saved === 'ar' ? 'ar' : 'en';
   });
 
   const setLang = (newLang: Language) => {
-    setLangState(newLang);
-    localStorage.setItem('glucocoach_lang', newLang);
+    const sanitizedLang: Language = newLang === 'ar' ? 'ar' : 'en';
+    setLangState(sanitizedLang);
+    localStorage.setItem('glucocoach_lang', sanitizedLang);
   };
 
   const toggleLang = () => {
-    if (lang === 'en') setLang('ar');
-    else if (lang === 'ar') setLang('hi');
-    else setLang('en');
+    setLang(lang === 'en' ? 'ar' : 'en');
   };
 
   useEffect(() => {
@@ -598,6 +601,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('glucocoach_current_glucose', String(val));
   };
 
+  // Daily Check-Ins & Heart Guard
+  const [dailyCheckIns, setDailyCheckIns] = useState<DailyCheckIn[]>(() => {
+    const saved = localStorage.getItem('glucocoach_checkins');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return initialCheckIns;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('glucocoach_checkins', JSON.stringify(dailyCheckIns));
+  }, [dailyCheckIns]);
+
+  // Yesterday's sugar / glucose level (defaults to second record in checkins or 122 mg/dL)
+  const [yesterdayGlucose, setYesterdayGlucose] = useState<number>(() => {
+    const saved = localStorage.getItem('glucocoach_yesterday_glucose');
+    if (saved) return Number(saved);
+    if (dailyCheckIns.length > 1 && dailyCheckIns[1].glucoseLevel) {
+      return dailyCheckIns[1].glucoseLevel;
+    }
+    return 122;
+  });
+
+  const handleSetYesterdayGlucose = (val: number) => {
+    setYesterdayGlucose(val);
+    localStorage.setItem('glucocoach_yesterday_glucose', String(val));
+  };
+
+  // Profile
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('glucocoach_profile');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return defaultProfile;
+  });
+
+  const updateUserProfile = (updates: Partial<UserProfile>) => {
+    setUserProfile((prev) => {
+      const next = { ...prev, ...updates };
+      localStorage.setItem('glucocoach_profile', JSON.stringify(next));
+      persistUserProfile(next);
+      return next;
+    });
+  };
+
   const [databaseConnected, setDatabaseConnected] = useState(true);
 
   // Initial cloud sync & database health check on app mount
@@ -646,10 +703,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const lastRecordedMeal = recordedMeals[0];
 
-  // Dynamic clinical suggestion for NEXT meal based on last meal and current sugar level
-  const nextMealSuggestion = useMemo(() => {
-    return generateNextMealSuggestion(lastRecordedMeal, currentSugarLevel);
-  }, [lastRecordedMeal, currentSugarLevel]);
+  // Today's cumulative sugar intake computed across recorded meals
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayRecordedMeals = useMemo(() => {
+    return recordedMeals.filter(
+      (m) => m.displayDate === 'Today' || (m.takenAt && m.takenAt.startsWith(todayIso))
+    );
+  }, [recordedMeals, todayIso]);
+
+  const todaySugarIntake = useMemo(() => {
+    return Math.round(
+      todayRecordedMeals.reduce((sum, m) => sum + (m.sugarGrams || 0), 0) * 10
+    ) / 10;
+  }, [todayRecordedMeals]);
+
+  const remainingSugarBudget = useMemo(() => {
+    const target = userProfile?.targetDailyAddedSugar || 25;
+    return Math.max(0, Math.round((target - todaySugarIntake) * 10) / 10);
+  }, [userProfile?.targetDailyAddedSugar, todaySugarIntake]);
+
+  // Dynamic clinical suggestion for NEXT meal based on historical meals, daily check-ins, and last logged glucose level
+  const nextMealPlan = useMemo(() => {
+    return generatePersonalizedNextMealPlan({
+      historicalMeals: recordedMeals,
+      historicalCheckIns: dailyCheckIns,
+      currentSugarLevel,
+      userProfile,
+    });
+  }, [recordedMeals, dailyCheckIns, currentSugarLevel, userProfile]);
+
+  const nextMealSuggestion = nextMealPlan.primarySuggestion;
 
   const recordMeal = (
     mealData: Partial<RecordedMeal> & { name: string; sugarGrams: number }
@@ -667,6 +750,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         : 'snack';
 
     const finalGlucose = mealData.glucoseAtMeal ?? currentSugarLevel;
+    const safeSugar = Math.max(0, Number(mealData.sugarGrams || 0));
+    const safeCarbs = Math.max(safeSugar, Number(mealData.carbsGrams || 0));
 
     const newMeal: RecordedMeal = {
       id: 'meal-' + Date.now(),
@@ -676,14 +761,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       takenAt: mealData.takenAt || now.toISOString(),
       displayTime: mealData.displayTime || timeStr,
       displayDate: mealData.displayDate || 'Today',
-      sugarGrams: Number(mealData.sugarGrams || 0),
-      addedSugarGrams: Number(mealData.addedSugarGrams || 0),
-      carbsGrams: Number(mealData.carbsGrams || 0),
+      sugarGrams: safeSugar,
+      addedSugarGrams: Number(mealData.addedSugarGrams ?? (safeSugar > 4 ? safeSugar - 2 : 0)),
+      teaspoons: mealData.teaspoons ?? Number((safeSugar / 4.2).toFixed(1)),
+      sugarCubes: mealData.sugarCubes ?? Number((safeSugar / 4.0).toFixed(1)),
+      carbsGrams: safeCarbs,
       proteinGrams: Number(mealData.proteinGrams || 0),
       calories: Number(mealData.calories || 0),
       spikeRisk:
         mealData.spikeRisk ||
-        (Number(mealData.sugarGrams) > 12 ? 'HIGH' : Number(mealData.sugarGrams) > 4 ? 'MEDIUM' : 'LOW'),
+        (safeSugar > 12 ? 'HIGH' : safeSugar > 4 ? 'MEDIUM' : 'LOW'),
+      predominantSugarType: mealData.predominantSugarType || 'sucrose',
+      pubchemCid: mealData.pubchemCid || (mealData.predominantSugarType === 'fructose' ? 5984 : mealData.predominantSugarType === 'glucose' ? 5793 : 5988),
+      glycemicIndex: mealData.glycemicIndex || 65,
+      glycemicLoad: mealData.glycemicLoad ?? Number(((65 * safeCarbs) / 100).toFixed(1)),
       glucoseAtMeal: finalGlucose,
       glucoseTiming: mealData.glucoseTiming || 'post_meal',
       imageUrl: mealData.imageUrl,
@@ -904,60 +995,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const weeklySugarLimit = 175; // 25g/day * 7 days (WHO recommendation)
   const isSugarLimitExceeded = totalBasketSugars > 50; // trigger basket warning if scanned trip has > 50g added sugars
 
-  // Daily Check-Ins & Heart Guard
-  const [dailyCheckIns, setDailyCheckIns] = useState<DailyCheckIn[]>(() => {
-    const saved = localStorage.getItem('glucocoach_checkins');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return initialCheckIns;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('glucocoach_checkins', JSON.stringify(dailyCheckIns));
-  }, [dailyCheckIns]);
-
-  // Yesterday's sugar / glucose level (defaults to second record in checkins or 122 mg/dL)
-  const [yesterdayGlucose, setYesterdayGlucose] = useState<number>(() => {
-    const saved = localStorage.getItem('glucocoach_yesterday_glucose');
-    if (saved) return Number(saved);
-    if (dailyCheckIns.length > 1 && dailyCheckIns[1].glucoseLevel) {
-      return dailyCheckIns[1].glucoseLevel;
-    }
-    return 122;
-  });
-
-  const handleSetYesterdayGlucose = (val: number) => {
-    setYesterdayGlucose(val);
-    localStorage.setItem('glucocoach_yesterday_glucose', String(val));
-  };
-
-  // Profile
-  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('glucocoach_profile');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return defaultProfile;
-  });
-
-  const updateUserProfile = (updates: Partial<UserProfile>) => {
-    setUserProfile((prev) => {
-      const next = { ...prev, ...updates };
-      localStorage.setItem('glucocoach_profile', JSON.stringify(next));
-      persistUserProfile(next);
-      return next;
-    });
-  };
-
   // Wearable simulated metrics
   const [wearableSynced, setWearableSynced] = useState(false);
   const [todayRestingHr, setTodayRestingHr] = useState(67);
@@ -1080,6 +1117,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentSugarLevel,
         setCurrentSugarLevel,
         nextMealSuggestion,
+        nextMealPlan,
+        todaySugarIntake,
+        remainingSugarBudget,
         isMealLoggerOpen,
         setIsMealLoggerOpen,
         orders,

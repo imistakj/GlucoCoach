@@ -1,9 +1,19 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { PhoneCall, HeartPulse, Globe, Activity } from 'lucide-react';
+import { PhoneCall, HeartPulse, Globe, Activity, Camera } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { lang, setLang, toggleLang, unit, setUnit, triggerRedEmergency, triageStatus } = useApp();
+  const {
+    lang,
+    setLang,
+    toggleLang,
+    unit,
+    setUnit,
+    triggerRedEmergency,
+    triageStatus,
+    todaySugarIntake,
+    setIsMealLoggerOpen,
+  } = useApp();
 
   const getTriageBadgeColor = () => {
     switch (triageStatus) {
@@ -47,6 +57,16 @@ export const Header: React.FC = () => {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          {/* Quick Sugar Intake Tracker */}
+          <button
+            onClick={() => setIsMealLoggerOpen(true)}
+            className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 text-emerald-300 font-bold border border-emerald-600/30 transition-all active:scale-95 shadow-sm"
+            title="Log Meal & Count Sugar Intake"
+          >
+            <Camera className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{todaySugarIntake}g / 25g {lang === 'ar' ? 'سكر' : 'sugar'}</span>
+          </button>
+
           {/* Unit Toggle (mg/dL vs mmol/L) */}
           <button
             onClick={() => setUnit(unit === 'mg/dL' ? 'mmol/L' : 'mg/dL')}
@@ -56,11 +76,11 @@ export const Header: React.FC = () => {
             {unit}
           </button>
 
-          {/* Trilingual Switcher (EN, AR, HI) */}
+          {/* Bilingual Switcher (Arabic & English) */}
           <div className="flex items-center bg-slate-800/90 rounded-lg p-0.5 border border-slate-700/60">
             <button
               onClick={() => setLang('ar')}
-              className={`text-xs px-2 py-1 rounded-md font-semibold transition-all ${
+              className={`text-xs px-2.5 py-1 rounded-md font-semibold transition-all ${
                 lang === 'ar'
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -70,19 +90,8 @@ export const Header: React.FC = () => {
               عربي
             </button>
             <button
-              onClick={() => setLang('hi')}
-              className={`text-xs px-2 py-1 rounded-md font-semibold transition-all ${
-                lang === 'hi'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="हिन्दी (Hindi)"
-            >
-              हिन्दी
-            </button>
-            <button
               onClick={() => setLang('en')}
-              className={`text-xs px-2 py-1 rounded-md font-semibold transition-all ${
+              className={`text-xs px-2.5 py-1 rounded-md font-semibold transition-all ${
                 lang === 'en'
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'

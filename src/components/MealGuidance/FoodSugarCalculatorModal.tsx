@@ -69,6 +69,8 @@ export const FoodSugarCalculatorModal: React.FC<FoodSugarCalculatorModalProps> =
       mealType: autoType,
       sugarGrams: analysisResult.totalSugarGrams,
       addedSugarGrams: analysisResult.addedSugarGrams,
+      teaspoons: analysisResult.teaspoons,
+      sugarCubes: analysisResult.sugarCubes,
       carbsGrams: analysisResult.totalCarbsGrams,
       proteinGrams: 24,
       calories: analysisResult.calories,
@@ -78,11 +80,15 @@ export const FoodSugarCalculatorModal: React.FC<FoodSugarCalculatorModalProps> =
           : analysisResult.spikeVelocity === 'Moderate'
           ? 'MEDIUM'
           : 'LOW',
+      predominantSugarType: analysisResult.predominantSugarType,
+      pubchemCid: analysisResult.pubchemCid,
+      glycemicIndex: analysisResult.glycemicIndex,
+      glycemicLoad: analysisResult.glycemicLoad,
       glucoseAtMeal: currentSugarLevel,
       glucoseTiming: 'post_meal',
       imageUrl: foodImage || undefined,
       source: 'ai_photo',
-      notes: `Scanned with AI Sugar Calculator (${analysisResult.teaspoons} tsp sugar)`,
+      notes: `Scanned with AI Sugar Calculator (${analysisResult.teaspoons} tsp ${analysisResult.predominantSugarType})`,
     });
     setHasRecordedMeal(true);
     setTimeout(() => setHasRecordedMeal(false), 4000);
@@ -733,7 +739,7 @@ export const FoodSugarCalculatorModal: React.FC<FoodSugarCalculatorModalProps> =
                 </div>
 
                 <p className="text-[11px] text-slate-400 leading-normal">
-                  <strong>Metabolic Fate:</strong> {currentSugarData.metabolicFate[lang]}
+                  <strong>Metabolic Fate:</strong> {currentSugarData.metabolicFate[lang === 'ar' ? 'ar' : 'en']}
                 </p>
               </div>
 
@@ -816,7 +822,7 @@ export const FoodSugarCalculatorModal: React.FC<FoodSugarCalculatorModalProps> =
                                 : `Order this diabetic-friendly meal (${matchedKitchenMeal.priceQAR} QAR)`}
                             </span>
                             <span className="text-[10px] text-emerald-400">
-                              {matchedKitchenMeal.deliveryKitchenName[lang]} • {matchedKitchenMeal.sugarGrams}g sugar
+                              {matchedKitchenMeal.deliveryKitchenName[lang === 'ar' ? 'ar' : 'en']} • {matchedKitchenMeal.sugarGrams}g sugar
                             </span>
                           </div>
                         </div>

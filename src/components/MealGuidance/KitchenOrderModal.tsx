@@ -39,6 +39,8 @@ export const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ meal, onCl
 
   if (!meal) return null;
 
+  const l = lang === 'ar' ? 'ar' : 'en';
+
   // Toggle portion tweaks
   const toggleMod = (mod: string) => {
     setSelectedMods((prev) =>
@@ -63,9 +65,9 @@ export const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ meal, onCl
     const modsText =
       selectedMods.length > 0 ? selectedMods.join(', ') : 'Standard diabetic safe preparation';
     return encodeURIComponent(
-      `مرحباً ${meal.deliveryKitchenName[lang]}،
+      `مرحباً ${meal.deliveryKitchenName[l]}،
 أود تأكيد طلب وجبة صحية معتمدة للسكري عبر تطبيق جلوكو كوتش قطر:
-- الوجبة: ${meal.name[lang]} (العدد: ${quantity})
+- الوجبة: ${meal.name[l]} (العدد: ${quantity})
 - التعديلات الصحية المطلوبة: ${modsText}
 - إجمالي السكر: ${meal.sugarGrams}غ سكر (0غ سكر مضاف)
 - العنوان: ${deliveryAddress} (${deliveryZone})
@@ -112,15 +114,15 @@ export const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ meal, onCl
             <div className="flex gap-3.5 p-3.5 rounded-2xl bg-slate-950 border border-slate-800 items-start">
               <img
                 src={meal.imageUrl}
-                alt={meal.name[lang]}
+                alt={meal.name[l]}
                 className="w-20 h-20 rounded-xl object-cover shrink-0 border border-slate-800"
               />
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-bold text-slate-400 block truncate">
-                  {meal.deliveryKitchenName[lang]}
+                  {meal.deliveryKitchenName[l]}
                 </span>
                 <h4 className="text-xs sm:text-sm font-bold text-white leading-snug truncate">
-                  {meal.name[lang]}
+                  {meal.name[l]}
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs font-black text-emerald-400">
@@ -141,7 +143,7 @@ export const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ meal, onCl
               </span>
 
               <div className="space-y-2">
-                {meal.portionMods[lang].map((mod, idx) => {
+                {meal.portionMods[l].map((mod: string, idx: number) => {
                   const isSelected = selectedMods.includes(mod);
                   return (
                     <button
@@ -207,7 +209,7 @@ export const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ meal, onCl
             <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
               <div className="flex items-center justify-between border-b border-slate-900 pb-2">
                 <span className="text-slate-400">{lang === 'ar' ? 'المطبخ المزود:' : 'Kitchen Provider:'}</span>
-                <span className="font-bold text-white">{meal.deliveryKitchenName[lang]}</span>
+                <span className="font-bold text-white">{meal.deliveryKitchenName[l]}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-900 pb-2">
                 <span className="text-slate-400">{lang === 'ar' ? 'إجمالي الطلب:' : 'Total Amount:'}</span>

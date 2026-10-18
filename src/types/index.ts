@@ -1,4 +1,4 @@
-export type Language = 'en' | 'ar' | 'hi';
+export type Language = 'en' | 'ar';
 export type GlucoseUnit = 'mg/dL' | 'mmol/L';
 export type TrafficLight = 'LOW' | 'MEDIUM' | 'HIGH';
 export type SpikeVelocity = 'Slow' | 'Moderate' | 'Rapid';
@@ -7,7 +7,6 @@ export type TriageLevel = 'GREEN' | 'AMBER' | 'RED';
 export type LocalizedText = {
   en: string;
   ar: string;
-  hi?: string;
   [key: string]: any;
 };
 
@@ -94,7 +93,7 @@ export interface DailyCheckIn {
   sleepQuality: 'good' | 'fair' | 'poor';
   medicationTaken: boolean;
   glucoseLevel?: number; // stored in mg/dL
-  glucoseTiming?: 'fasting' | 'pre_meal' | 'post_meal' | 'bedtime';
+  glucoseTiming?: 'fasting' | 'pre_meal' | 'post_meal' | 'bedtime' | 'random';
   restingHeartRate?: number;
   steps?: number;
   symptoms: {
@@ -128,7 +127,7 @@ export interface FoodSugarAnalysisResult {
   calories: number;
   teaspoons: number;
   sugarCubes: number;
-  predominantSugarType: 'sucrose' | 'fructose' | 'glucose';
+  predominantSugarType: 'sucrose' | 'fructose' | 'glucose' | 'maltose' | 'lactose' | 'erythritol' | string;
   pubchemCid: number;
   glycemicIndex: number;
   glycemicLoad: number;
@@ -250,10 +249,16 @@ export interface RecordedMeal {
   displayDate: string; // e.g. "Today" or "Yesterday"
   sugarGrams: number;
   addedSugarGrams: number;
+  teaspoons?: number;
+  sugarCubes?: number;
   carbsGrams: number;
   proteinGrams: number;
   calories: number;
   spikeRisk: TrafficLight;
+  predominantSugarType?: 'sucrose' | 'fructose' | 'glucose' | 'maltose' | 'lactose' | 'erythritol' | string;
+  pubchemCid?: number;
+  glycemicIndex?: number;
+  glycemicLoad?: number;
   glucoseAtMeal?: number; // blood glucose reading in mg/dL around meal
   glucoseTiming?: 'fasting' | 'pre_meal' | 'post_meal' | 'random';
   imageUrl?: string;
@@ -292,4 +297,31 @@ export interface NextMealSuggestion {
   };
   kitchenMealId?: string;
   priceQAR?: number;
+  optionLabel?: {
+    en: string;
+    ar: string;
+  };
+  badge?: {
+    en: string;
+    ar: string;
+  };
+}
+
+export interface PersonalizedNextMealPlan {
+  primarySuggestion: NextMealSuggestion;
+  alternativeSuggestions: NextMealSuggestion[];
+  historicalAnalysis: {
+    lastLoggedGlucose: number;
+    glucoseStatus: 'elevated' | 'optimal' | 'low' | 'critical_high';
+    todayMealsCount: number;
+    todayTotalSugarGrams: number;
+    remainingSugarBudgetGrams: number;
+    targetDailySugar: number;
+    lastMealName: string;
+    lastMealSugar: number;
+    lastMealTimeDisplay: string;
+    hasRecentSugarSpikes: boolean;
+    clinicalMessageEn: string;
+    clinicalMessageAr: string;
+  };
 }

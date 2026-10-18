@@ -11,6 +11,7 @@ import { RecordedMealsHistoryCard } from './RecordedMealsHistoryCard';
 import { MealLoggerModal } from './MealLoggerModal';
 import { MissedMealReminderCard } from './MissedMealReminderCard';
 import { Type2DiabetesHealthQuestionsCard } from '../HeartGuard/Type2DiabetesHealthQuestionsCard';
+import { SugarScienceWorkbenchModal } from './SugarScienceWorkbenchModal';
 import {
   Camera,
   UploadCloud,
@@ -52,6 +53,7 @@ export const MealGuidanceView: React.FC = () => {
 
   const [selectedMeal, setSelectedMeal] = useState<MealDish | null>(null);
   const [isSugarCalculatorOpen, setIsSugarCalculatorOpen] = useState(false);
+  const [isScienceWorkbenchOpen, setIsScienceWorkbenchOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedScript, setCopiedScript] = useState(false);
@@ -204,13 +206,23 @@ export const MealGuidanceView: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsSugarCalculatorOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-950 transition-all active:scale-95 shrink-0"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>{lang === 'ar' ? 'حساب السكر في صورة الطعام بالذكاء الاصطناعي' : 'Calculate Sugar in Food Picture (AI)'}</span>
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <button
+              onClick={() => setIsScienceWorkbenchOpen(true)}
+              className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-700/60 text-cyan-200 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95"
+            >
+              <Beaker className="w-4 h-4 text-cyan-400" />
+              <span>{lang === 'ar' ? 'كيمياء السكر (PubChem)' : 'Sugar Chemistry (PubChem)'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsSugarCalculatorOpen(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-950 transition-all active:scale-95"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>{lang === 'ar' ? 'حساب السكر من الصورة (AI)' : 'Food Photo Sugar Counter (AI)'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -229,10 +241,8 @@ export const MealGuidanceView: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-xs text-white">
                 {lang === 'ar'
-                  ? 'فحص السكري السريع (٣ أسئلة بالعربية والهندية)'
-                  : lang === 'hi'
-                  ? 'त्वरित स्वास्थ्य जांच (3 प्रश्न - अरबी व हिन्दी)'
-                  : 'Type 2 Diabetes Check (3 Questions in Arabic & Hindi)'}
+                  ? 'فحص السكري السريع (٣ أسئلة صحية)'
+                  : 'Type 2 Diabetes Check (3 Quick Health Questions)'}
               </span>
               <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">
                 T2D
@@ -241,8 +251,6 @@ export const MealGuidanceView: React.FC = () => {
             <span className="text-[11px] text-slate-400 block">
               {lang === 'ar'
                 ? '«كيف تشعر اليوم؟» • أعراض هبوط/ارتفاع السكر • متابعة الأدوية اليومية'
-                : lang === 'hi'
-                ? '«आज आप कैसा महसूस कर रहे हैं?» • लक्षण • दवा'
                 : '"How are you feeling today?" • Blood sugar symptoms • Medication'}
             </span>
           </div>
@@ -258,16 +266,8 @@ export const MealGuidanceView: React.FC = () => {
         >
           <span>
             {showT2DQuestions
-              ? lang === 'ar'
-                ? 'إخفاء الأسئلة'
-                : lang === 'hi'
-                ? 'छिपाएं'
-                : 'Hide Questions'
-              : lang === 'ar'
-              ? 'إجراء الفحص الآن'
-              : lang === 'hi'
-              ? 'जांच शुरू करें'
-              : 'Take Quick Check'}
+              ? (lang === 'ar' ? 'إخفاء الأسئلة' : 'Hide Questions')
+              : (lang === 'ar' ? 'إجراء الفحص الآن' : 'Take Quick Check')}
           </span>
         </button>
       </div>
@@ -308,10 +308,10 @@ export const MealGuidanceView: React.FC = () => {
                 </span>
               </div>
               <h4 className="text-sm font-bold text-white mt-0.5">
-                {activeKitchenOrder.meal.name[lang]} (x{activeKitchenOrder.quantity})
+                {activeKitchenOrder.meal.name[lang === 'ar' ? 'ar' : 'en']} (x{activeKitchenOrder.quantity})
               </h4>
               <p className="text-[11px] text-slate-400">
-                {activeKitchenOrder.meal.deliveryKitchenName[lang]} • {activeKitchenOrder.totalQAR} QAR • {activeKitchenOrder.estimatedDeliveryTime}
+                {activeKitchenOrder.meal.deliveryKitchenName[lang === 'ar' ? 'ar' : 'en']} • {activeKitchenOrder.totalQAR} QAR • {activeKitchenOrder.estimatedDeliveryTime}
               </p>
             </div>
           </div>
@@ -617,6 +617,12 @@ export const MealGuidanceView: React.FC = () => {
       {isMealLoggerOpen && (
         <MealLoggerModal
           onClose={() => setIsMealLoggerOpen(false)}
+        />
+      )}
+
+      {isScienceWorkbenchOpen && (
+        <SugarScienceWorkbenchModal
+          onClose={() => setIsScienceWorkbenchOpen(false)}
         />
       )}
     </div>

@@ -184,7 +184,7 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose 
                 {t.waiterScriptTitle}
               </h3>
               <button
-                onClick={() => handleCopyScript(meal.waiterScript[lang])}
+                onClick={() => handleCopyScript(meal.waiterScript[lang] || meal.waiterScript.en)}
                 className="text-[11px] font-semibold text-slate-300 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 transition-colors"
               >
                 {copiedScript ? (

@@ -86,8 +86,6 @@ export const MissedMealReminderCard: React.FC<MissedMealReminderCardProps> = ({
           <span>
             {lang === 'ar'
               ? `وجبتك الأخيرة مسجلة (${lastRecordedMeal?.name || 'مؤخراً'}) • توقيت التغذية ممتاز`
-              : lang === 'hi'
-              ? `आपका पिछला भोजन दर्ज है (${lastRecordedMeal?.name || 'हाल ही में'}) • समय पर पोषण`
               : `Last meal logged (${lastRecordedMeal?.name || 'recently'}) • Regular meal timing`}
           </span>
         </div>
@@ -96,7 +94,7 @@ export const MissedMealReminderCard: React.FC<MissedMealReminderCardProps> = ({
           className="text-[10px] text-slate-400 hover:text-emerald-400 underline font-mono shrink-0"
           title="Simulate 5+ hours without a meal for Type 2 diabetes testing"
         >
-          {lang === 'ar' ? 'اختبار تذكير الوجبة المتأخرة' : lang === 'hi' ? 'भोजन देरी परीक्षण' : 'Test Missed Meal Alert'}
+          {lang === 'ar' ? 'اختبار تذكير الوجبة المتأخرة' : 'Test Missed Meal Alert'}
         </button>
       </div>
     );
@@ -115,8 +113,6 @@ export const MissedMealReminderCard: React.FC<MissedMealReminderCardProps> = ({
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider">
                 {lang === 'ar'
                   ? 'تنبيه توقيت الوجبة • السكري من النوع الثاني'
-                  : lang === 'hi'
-                  ? 'भोजन समय अनुस्मारक • टाइप 2 डायबिटीज'
                   : 'Meal Timing Check • Type 2 Diabetes'}
               </span>
               <span className="text-[11px] text-slate-400 font-mono">
@@ -162,15 +158,11 @@ export const MissedMealReminderCard: React.FC<MissedMealReminderCardProps> = ({
           <span className="font-bold text-white block">
             {lang === 'ar'
               ? 'أهمية انتظام الوجبات لمرضى السكري في قطر:'
-              : lang === 'hi'
-              ? 'कतर में टाइप 2 डायबिटीज रोगियों के लिए नियमित भोजन क्यों जरूरी है:'
               : 'Why Regular Meal Timing Matters for Type 2 Diabetes:'}
           </span>
           <p className="text-[11px] text-slate-300 leading-relaxed">
             {lang === 'ar'
               ? 'الامتناع المطول عن الأكل مع أدوية السكري (مثل الميتفورمين أو الإنسولين) قد يؤدي إلى هبوط حاد ومفاجئ، يليه إفراط في النشويات لاحقاً. يفضل تناول وجبة متوازنة غنية بالألياف والبروتين.'
-              : lang === 'hi'
-              ? 'डायबिटीज की दवाओं (जैसे मेटफॉर्मिन या इंसुलिन) के साथ लंबे समय तक भूखे रहने से शुगर अचानक गिर सकती है, जिसके बाद अत्यधिक भूख से शुगर बढ़ सकती है। संतुलित भोजन लें।'
               : 'Skipping meals while on diabetes medications increases the risk of reactive hypoglycemia and subsequent evening overeating. Consistent portions maintain insulin sensitivity.'}
           </p>
         </div>
@@ -184,8 +176,6 @@ export const MissedMealReminderCard: React.FC<MissedMealReminderCardProps> = ({
             <span>
               {lang === 'ar'
                 ? 'تم تسجيل الصيام / تخطي الوجبة. احرص على شرب الماء ومراقبة أعراض الهبوط.'
-                : lang === 'hi'
-                ? 'उपवास/रोज़ा दर्ज किया गया। पर्याप्त पानी पिएं और लो शुगर के लक्षणों पर ध्यान दें।'
                 : 'Fasting noted. Remember to stay hydrated and monitor blood glucose levels.'}
             </span>
           </div>
@@ -193,7 +183,7 @@ export const MissedMealReminderCard: React.FC<MissedMealReminderCardProps> = ({
             onClick={() => setFastingAcknowledged(false)}
             className="text-[10px] underline text-teal-300 hover:text-white"
           >
-            {lang === 'ar' ? 'تغيير' : lang === 'hi' ? 'बदलें' : 'Change'}
+            {lang === 'ar' ? 'تغيير' : 'Change'}
           </button>
         </div>
       ) : (

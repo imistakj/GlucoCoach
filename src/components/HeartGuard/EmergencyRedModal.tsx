@@ -192,7 +192,7 @@ ${lang === 'ar' ? 'جهة اتصال الطوارئ:' : 'Emergency Contact:'} ${
                   className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs"
                 >
                   <div>
-                    <h4 className="font-bold text-white text-xs">{hosp.name[lang]}</h4>
+                    <h4 className="font-bold text-white text-xs">{hosp.name[lang === 'ar' ? 'ar' : 'en'] || hosp.name.en}</h4>
                     <span className="text-[10px] text-slate-400">{hosp.zone}</span>
                   </div>
                   <a
