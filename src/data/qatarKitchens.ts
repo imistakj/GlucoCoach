@@ -1,4 +1,4 @@
-import { QatariKitchenProvider, KitchenMealItem } from '../types';
+import { QatariKitchenProvider, KitchenMealItem, QatarFoodProvider } from '../types';
 
 export const QATAR_KITCHEN_PROVIDERS: QatariKitchenProvider[] = [
   {
@@ -293,3 +293,109 @@ export const QATAR_HEALTHY_MEALS: KitchenMealItem[] = [
     category: 'beverages',
   },
 ];
+
+export const DUMMY_QATAR_FOOD_PROVIDERS: QatarFoodProvider[] = [
+  {
+    id: 'provider-talabat',
+    name: {
+      en: 'Talabat Qatar (Healthy & Diet Delivery)',
+      ar: 'طلبات قطر (قسم الوجبات الصحية والسكري)',
+    },
+    tagline: {
+      en: 'Doha’s top delivery network with certified low-glycemic kitchen partners',
+      ar: 'شبكة التوصيل الرائدة في قطر مع مطابخ السكري المعتمدة ونقاط التوصيل السريع',
+    },
+    logoText: 'talabat',
+    accentColor: 'from-orange-500 to-amber-600',
+    deliveryFeeQAR: 10,
+    deliveryTimeMin: 25,
+    isAutomatedSupported: true,
+    rating: 4.9,
+  },
+  {
+    id: 'provider-snoonu',
+    name: {
+      en: 'Snoonu Red Express (Doha Quick)',
+      ar: 'سنونو إكسبريس (توصيل الدوحة السريع)',
+    },
+    tagline: {
+      en: 'Ultra-fast 20-minute delivery direct to your home or office in Doha',
+      ar: 'توصيل فائق السرعة خلال 20 دقيقة إلى منزلك أو مقر عملك في الدوحة',
+    },
+    logoText: 'snoonu',
+    accentColor: 'from-rose-600 to-red-600',
+    deliveryFeeQAR: 12,
+    deliveryTimeMin: 20,
+    isAutomatedSupported: true,
+    rating: 4.8,
+  },
+  {
+    id: 'provider-rafeeq',
+    name: {
+      en: 'Rafeeq Qatar Delivery',
+      ar: 'رفيق دليفري قطر (المطابخ القطرية)',
+    },
+    tagline: {
+      en: 'Authentic local Qatari delivery app with verified traditional kitchens',
+      ar: 'التطبيق القطري المتخصص في المطابخ الشعبية والولائم الصحية الموزونة',
+    },
+    logoText: 'rafeeq',
+    accentColor: 'from-purple-600 to-indigo-600',
+    deliveryFeeQAR: 10,
+    deliveryTimeMin: 25,
+    isAutomatedSupported: true,
+    rating: 4.8,
+  },
+  {
+    id: 'provider-baladna',
+    name: {
+      en: 'Baladna Farm Direct Express',
+      ar: 'مزارع بلدنا إكسبريس المباشر',
+    },
+    tagline: {
+      en: 'Direct farm-to-table delivery of fresh laban, halloumi & protein bowls',
+      ar: 'توصيل فوري من المزرعة: ألبان بروبيوتيك، جبن حلوم، وأطباق البروتين الطازجة',
+    },
+    logoText: 'baladna',
+    accentColor: 'from-emerald-600 to-teal-700',
+    deliveryFeeQAR: 8,
+    deliveryTimeMin: 30,
+    isAutomatedSupported: true,
+    rating: 4.9,
+  },
+  {
+    id: 'provider-diet-cafe',
+    name: {
+      en: 'Diet Cafe Doha (Al Sadd)',
+      ar: 'دايت كافيه الدوحة (السد / الوعب)',
+    },
+    tagline: {
+      en: 'Clinical diabetic meals with certified grams of carbs and zero added sugar',
+      ar: 'وجبات حمية طبية معتمدة مع ضبط دقيق لغرامات السكر والنشويات',
+    },
+    logoText: 'diet cafe',
+    accentColor: 'from-cyan-600 to-blue-700',
+    deliveryFeeQAR: 15,
+    deliveryTimeMin: 30,
+    isAutomatedSupported: true,
+    rating: 4.9,
+  },
+  {
+    id: 'provider-ansar',
+    name: {
+      en: 'Ansar Gallery Fresh Food & Kitchen',
+      ar: 'أنصار جاليري فود كيتشن ومشاوي',
+    },
+    tagline: {
+      en: 'Fresh charcoal grilled meats, baked fish & Mediterranean salads',
+      ar: 'مشاوي فحم طازجة يومياً وأسماك مشوية مع سلطات البحر الأبيض المتوسط',
+    },
+    logoText: 'ansar',
+    accentColor: 'from-amber-600 to-yellow-600',
+    deliveryFeeQAR: 9,
+    deliveryTimeMin: 35,
+    isAutomatedSupported: false,
+    rating: 4.7,
+  },
+];
+

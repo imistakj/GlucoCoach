@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { QATAR_HEALTHY_MEALS } from '../../data/qatarKitchens';
-import { NextMealSuggestion } from '../../types';
+import { QATAR_HEALTHY_MEALS, DUMMY_QATAR_FOOD_PROVIDERS } from '../../data/qatarKitchens';
+import { NextMealSuggestion, QatarFoodProvider, KitchenMealItem } from '../../types';
 import {
   Sparkles,
   ChefHat,
@@ -17,6 +17,7 @@ import {
   Sliders,
   Utensils,
   ChevronDown,
+  ChevronUp,
   Info,
   Calendar,
   AlertCircle,
@@ -24,6 +25,12 @@ import {
   Flame,
   Beaker,
   ShieldCheck,
+  Truck,
+  Repeat,
+  Store,
+  AlertTriangle,
+  PhoneCall,
+  Zap,
 } from 'lucide-react';
 
 interface NextMealRecommendationCardProps {
@@ -43,11 +50,16 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
     currentSugarLevel,
     setCurrentSugarLevel,
     nextMealPlan,
-    nextMealSuggestion,
     openOrderModalForMeal,
     todaySugarIntake,
     remainingSugarBudget,
     userProfile,
+    foodProviders,
+    autoMealOrderConfig,
+    updateAutoMealOrderConfig,
+    triggerAutoMealOrderNow,
+    isHighSugarAlarmOpen,
+    setIsHighSugarAlarmOpen,
   } = useApp();
 
   const l = lang === 'ar' ? 'ar' : 'en';
@@ -57,6 +69,8 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
   const [customGlucoseInput, setCustomGlucoseInput] = useState(String(currentSugarLevel));
   const [justLoggedSuccess, setJustLoggedSuccess] = useState(false);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number>(0);
+  const [showAutoSettings, setShowAutoSettings] = useState(false);
+  const [justTriggeredAutoOrder, setJustTriggeredAutoOrder] = useState(false);
 
   // Combine primary suggestion + alternatives into a selectable list
   const allMealOptions: NextMealSuggestion[] = [
@@ -66,11 +80,12 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
 
   const activeSuggestion = allMealOptions[selectedOptionIndex] || nextMealPlan.primarySuggestion;
 
-  const matchedKitchenMeal = activeSuggestion.kitchenMealId
+  // Best matching partner kitchen dish for 1-click ordering
+  const matchedKitchenMeal: KitchenMealItem = (activeSuggestion.kitchenMealId
     ? QATAR_HEALTHY_MEALS.find((m) => m.id === activeSuggestion.kitchenMealId)
-    : null;
+    : undefined) || QATAR_HEALTHY_MEALS.find((m) => m.sugarGrams <= 2) || QATAR_HEALTHY_MEALS[0];
 
-  // Handle quick glucose updates
+  // Quick glucose updates
   const handleQuickGlucoseSelect = (val: number) => {
     setCurrentSugarLevel(val);
     setCustomGlucoseInput(String(val));
@@ -86,7 +101,7 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
     }
   };
 
-  // 1-Click "I Ate This Meal" (Record suggested meal as taken)
+  // 1-Click "I Ate This Meal"
   const handleRecordSuggestedMeal = () => {
     recordMeal({
       name: activeSuggestion.dishName.en,
@@ -109,15 +124,88 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
     }, 3500);
   };
 
-  const isHighGlucose = currentSugarLevel > 135;
+  // Trigger test auto-order
+  const handleTestAutoOrder = () => {
+    triggerAutoMealOrderNow(activeSuggestion.targetMealType);
+    setJustTriggeredAutoOrder(true);
+    setTimeout(() => setJustTriggeredAutoOrder(false), 4000);
+  };
+
+  const isHighGlucose = currentSugarLevel >= 180;
+  const isModerateHigh = currentSugarLevel > 135 && currentSugarLevel < 180;
   const isOptimal = currentSugarLevel >= 80 && currentSugarLevel <= 135;
   const isLow = currentSugarLevel < 80;
 
   const analysis = nextMealPlan.historicalAnalysis;
 
+  // Meal timing estimate
+  const currentHour = new Date().getHours();
+  const mealSlotName =
+    currentHour >= 5 && currentHour < 11
+      ? lang === 'ar' ? 'وجبة الإفطار (7:00 - 10:00 ص)' : 'Breakfast Window (7:00 - 10:00 AM)'
+      : currentHour >= 11 && currentHour < 16
+      ? lang === 'ar' ? 'وجبة الغداء (12:30 - 2:30 م)' : 'Lunch Window (12:30 - 2:30 PM)'
+      : currentHour >= 16 && currentHour < 21
+      ? lang === 'ar' ? 'وجبة العشاء (7:00 - 9:00 م)' : 'Dinner Window (7:00 - 9:00 PM)'
+      : lang === 'ar' ? 'وجبة خفيفة منخفضة السكر' : 'Low-Sugar Snack Window';
+
   return (
     <div className="bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border-2 border-emerald-500/50 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-5">
       
+      {/* 1. HEALTH MONITOR: PERSISTENT HIGH SUGAR ALARM TO CLINIC / DOCTOR */}
+      {isHighGlucose && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-950/90 via-rose-900/80 to-slate-950 border-2 border-rose-500 shadow-xl shadow-rose-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-950">
+              <AlertTriangle className="w-6 h-6 animate-bounce" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-rose-300">
+                  {lang === 'ar' ? 'إنذار طبي: السكر مرتفع ومستمر' : 'HIGH GLUCOSE CLINICAL ALARM'}
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500 text-white">
+                  {formatGlucose(currentSugarLevel)}
+                </span>
+              </div>
+              <p className="text-xs text-rose-100 font-medium mt-0.5">
+                {lang === 'ar'
+                  ? `سكر الدم مرتفع (${formatGlucose(currentSugarLevel)}). راجع عيادتك المسجلة (${userProfile.healthCenter || 'مركز السد الصحي'}) وتناول وجبة منخفضة السكر في موعدها.`
+                  : `Blood sugar is persistently high (${formatGlucose(currentSugarLevel)}). Contact your clinic doctor and consume on-time low-sugar meals.`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsHighSugarAlarmOpen(true)}
+            className="px-4 py-2 rounded-xl bg-white text-rose-950 font-black text-xs hover:bg-rose-100 shadow-md active:scale-95 transition-all shrink-0 flex items-center justify-center gap-1.5"
+          >
+            <PhoneCall className="w-3.5 h-3.5 text-rose-700" />
+            <span>{lang === 'ar' ? 'عرض العيادة والطبيب' : 'View Clinic & Doctor'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* 2. ON-TIME MEAL SCHEDULE & TIMING STRIP */}
+      <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="font-bold text-white">
+            {lang === 'ar' ? 'موعد الوجبة القادمة:' : 'On-Time Meal Schedule:'}
+          </span>
+          <span className="text-emerald-400 font-semibold">{mealSlotName}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+            {lang === 'ar' ? 'وجبة منخفضة السكر (0-3غ)' : 'Low-Sugar Guarantee (0-3g)'}
+          </span>
+          <span className="text-slate-400 text-[11px]">
+            {lang === 'ar' ? 'تصل في ~25 دقيقة' : 'Arrives in ~25m'}
+          </span>
+        </div>
+      </div>
+
       {/* CARD HEADER & BADGES */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
         <div className="flex items-center gap-3">
@@ -144,14 +232,133 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
         {/* Action Controls */}
         <div className="flex items-center gap-2 self-start lg:self-auto flex-wrap">
           <button
+            onClick={() => setShowAutoSettings(!showAutoSettings)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 border ${
+              autoMealOrderConfig.enabled
+                ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/50'
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
+            }`}
+          >
+            <Repeat className="w-3.5 h-3.5 text-emerald-400" />
+            <span>
+              {autoMealOrderConfig.enabled
+                ? lang === 'ar' ? 'الأتمتة مفعلة ✓' : 'Auto-Order Active ✓'
+                : lang === 'ar' ? 'أتمتة طلب الوجبة' : 'Automate Orders'}
+            </span>
+            {showAutoSettings ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+
+          <button
             onClick={onOpenMealLogger}
             className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all active:scale-95"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span>{lang === 'ar' ? '📸 صور أو سجل وجبة جديدة' : '📸 Snap / Log New Meal'}</span>
+            <span>{lang === 'ar' ? '📸 صور أو سجل وجبة' : '📸 Snap / Log Meal'}</span>
           </button>
         </div>
       </div>
+
+      {/* 3. AUTOMATION SETTINGS ACCORDION */}
+      {showAutoSettings && (
+        <div className="p-4 rounded-2xl bg-slate-950 border-2 border-emerald-500/40 space-y-3 animate-in fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                <Repeat className="w-4 h-4 text-emerald-400" />
+                {lang === 'ar' ? 'أتمتة طلب الوجبات الصحية في موعدها' : 'Automate On-Time Low-Sugar Deliveries'}
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                {lang === 'ar'
+                  ? 'يضمن وصول وجبتك المنخفضة السكر في الموعد المحدد دون تأخير أو نسيان'
+                  : 'Ensures recommended diabetic-friendly meals arrive right on time for your meal schedule'}
+              </p>
+            </div>
+
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoMealOrderConfig.enabled}
+                onChange={(e) => updateAutoMealOrderConfig({ enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600" />
+            </label>
+          </div>
+
+          {/* Provider selector for automated orders */}
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold text-slate-300 block">
+              {lang === 'ar' ? 'مزود التوصيل المفضل في قطر:' : 'Preferred Qatar Food Provider:'}
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {foodProviders.map((provider) => {
+                const isSelected = autoMealOrderConfig.preferredProviderId === provider.id;
+                return (
+                  <button
+                    key={provider.id}
+                    type="button"
+                    onClick={() => updateAutoMealOrderConfig({ preferredProviderId: provider.id })}
+                    className={`p-2 rounded-xl border text-xs text-left rtl:text-right flex items-center justify-between transition-all ${
+                      isSelected
+                        ? 'bg-emerald-950/60 border-emerald-500 font-bold text-white shadow-sm'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="truncate">{provider.name[l]}</span>
+                    {isSelected && <span className="text-emerald-400 text-xs">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+            <div>
+              <span className="text-slate-400 block mb-1">
+                {lang === 'ar' ? 'موعد الغداء اليومي:' : 'Daily Lunch Schedule:'}
+              </span>
+              <input
+                type="time"
+                value={autoMealOrderConfig.lunchTime}
+                onChange={(e) => updateAutoMealOrderConfig({ lunchTime: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-mono text-xs"
+              />
+            </div>
+            <div>
+              <span className="text-slate-400 block mb-1">
+                {lang === 'ar' ? 'موعد العشاء اليومي:' : 'Daily Dinner Schedule:'}
+              </span>
+              <input
+                type="time"
+                value={autoMealOrderConfig.dinnerTime}
+                onChange={(e) => updateAutoMealOrderConfig({ dinnerTime: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-mono text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+            <span className="text-slate-400 text-[11px]">
+              {autoMealOrderConfig.lastAutoOrderedAt
+                ? `${lang === 'ar' ? 'آخر طلب آلي:' : 'Last auto-order:'} ${new Date(autoMealOrderConfig.lastAutoOrderedAt).toLocaleTimeString()}`
+                : lang === 'ar' ? 'جاهز لجدولة الوجبات في موعدها' : 'Ready for scheduled on-time delivery'}
+            </span>
+
+            <button
+              onClick={handleTestAutoOrder}
+              disabled={justTriggeredAutoOrder}
+              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 active:scale-95 transition-all shadow-md"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>
+                {justTriggeredAutoOrder
+                  ? lang === 'ar' ? 'تم إرسال الطلب الآلي!' : 'Auto-Order Sent!'
+                  : lang === 'ar' ? 'اختبار الطلب الآلي الآن' : 'Trigger Automated Order Now'}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* HISTORICAL CLINICAL DATA SYNTHESIS STRIP */}
       <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5">
@@ -159,207 +366,85 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-bold text-slate-300">
-              {lang === 'ar' ? 'ملخص تحليلاتك التاريخية اليوم:' : 'Your Historical Synthesis Today:'}
+              {lang === 'ar' ? 'تحليل التاريخ السريري لليوم:' : 'Today’s Clinical Context:'}
+            </span>
+            <span className="text-slate-400">
+              {analysis.todayMealsCount} {lang === 'ar' ? 'وجبات مسجلة' : 'meals logged'} • {todaySugarIntake}g {lang === 'ar' ? 'سكر مستهلك' : 'sugar taken'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
-              {recordedMeals.length} {lang === 'ar' ? 'وجبات مسجلة' : 'meals logged'}
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-semibold">
-              {todaySugarIntake}g {lang === 'ar' ? 'سكر مستهلك' : 'sugar taken'}
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
-              {remainingSugarBudget}g {lang === 'ar' ? 'متبقي من الميزانية' : 'allowance left'}
-            </span>
-          </div>
-        </div>
-
-        {/* Dynamic Clinical Insight linking historical glucose to suggestion */}
-        <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80">
-          💡 <span className="font-semibold text-white">
-            {lang === 'ar' ? analysis.clinicalMessageAr : analysis.clinicalMessageEn}
-          </span>
-        </p>
-      </div>
-
-      {/* INPUT CONTEXT: LAST MEAL TAKEN & CURRENT SUGAR LEVEL DISPLAY */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-        
-        {/* Box 1: Last Meal Taken */}
-        <div className="bg-slate-950/80 p-3.5 sm:p-4 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-              <History className="w-3.5 h-3.5 text-slate-400" />
-              {lang === 'ar' ? 'آخر وجبة مسجلة:' : 'Last Recorded Meal in History:'}
-            </span>
-            <span className="text-[11px] font-medium text-slate-400">
-              {lastRecordedMeal?.displayDate || 'Today'} • {lastRecordedMeal?.displayTime || 'Recent'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {lastRecordedMeal?.imageUrl && (
-              <img
-                src={lastRecordedMeal.imageUrl}
-                alt={lastRecordedMeal.name}
-                className="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-800"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <h4 className="text-sm font-bold text-white truncate">
-                {lang === 'ar' && lastRecordedMeal?.nameAr
-                  ? lastRecordedMeal.nameAr
-                  : lastRecordedMeal?.name || 'Chicken Machboos with Yogurt'}
-              </h4>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className="text-[11px] font-semibold text-emerald-400">
-                  {lastRecordedMeal?.sugarGrams ?? 1.5}g sugar
-                </span>
-                <span className="text-slate-600">•</span>
-                <span className="text-[11px] text-slate-400">
-                  {lastRecordedMeal?.carbsGrams ?? 32}g carbs
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                    lastRecordedMeal?.spikeRisk === 'HIGH'
-                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                      : lastRecordedMeal?.spikeRisk === 'MEDIUM'
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                  }`}
-                >
-                  {lastRecordedMeal?.spikeRisk === 'HIGH'
-                    ? lang === 'ar' ? 'عالي السكر' : 'High Glycemic'
-                    : lastRecordedMeal?.spikeRisk === 'MEDIUM'
-                    ? lang === 'ar' ? 'متوسط' : 'Medium Glycemic'
-                    : lang === 'ar' ? 'منخفض السكر' : 'Low Glycemic'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Box 2: Current Recorded Sugar Level */}
-        <div className="bg-slate-950/80 p-3.5 sm:p-4 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-emerald-400" />
-              {lang === 'ar' ? 'آخر قراءة مسجلة لسكر الدم:' : 'Last Logged Blood Sugar Level:'}
-            </span>
-            <button
-              onClick={() => setIsEditingGlucose(!isEditingGlucose)}
-              className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline"
-            >
-              <Sliders className="w-3 h-3" />
-              <span>{isEditingGlucose ? (lang === 'ar' ? 'إلغاء' : 'Cancel') : (lang === 'ar' ? 'تعديل / اختبار القراءة' : 'Test / Adjust Glucose')}</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-baseline gap-2">
-              <span
-                className={`text-2xl sm:text-3xl font-black ${
-                  isHighGlucose
-                    ? 'text-amber-400'
-                    : isLow
-                    ? 'text-cyan-400'
-                    : 'text-emerald-400'
-                }`}
-              >
-                {formatGlucose(currentSugarLevel)}
-              </span>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                  isHighGlucose
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : isLow
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                }`}
-              >
-                {isHighGlucose
-                  ? lang === 'ar' ? 'مرتفع (بروتوكول تفريغ الكبد)' : 'Elevated (Clearance Protocol)'
-                  : isLow
-                  ? lang === 'ar' ? 'منخفض (بروتوكول ثبات)' : 'Borderline Low (Buffer Protocol)'
-                  : lang === 'ar' ? 'مثالي ومتوازن' : 'Optimal Target (Maintenance)'}
-              </span>
-            </div>
-          </div>
-
-          {/* Inline quick selector / test pills */}
-          {isEditingGlucose && (
-            <div className="pt-2 border-t border-slate-900 space-y-2 animate-in fade-in">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'اختبار قراءة سريعة:' : 'Quick Test Values:'}</span>
-                <button
-                  type="button"
-                  onClick={() => handleQuickGlucoseSelect(98)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-emerald-300 font-bold"
-                >
-                  98 mg/dL (Normal)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickGlucoseSelect(148)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 font-bold"
-                >
-                  148 mg/dL (Elevated)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickGlucoseSelect(195)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-rose-300 font-bold"
-                >
-                  195 mg/dL (Spike)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickGlucoseSelect(72)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 font-bold"
-                >
-                  72 mg/dL (Low)
-                </button>
-              </div>
-
-              <form onSubmit={handleCustomGlucoseSubmit} className="flex gap-2">
+          {/* Blood Glucose Badge with Quick Edit */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-slate-400">{lang === 'ar' ? 'آخر سكر دم:' : 'Last Glucose:'}</span>
+            {isEditingGlucose ? (
+              <form onSubmit={handleCustomGlucoseSubmit} className="flex items-center gap-1">
                 <input
                   type="number"
-                  min="40"
-                  max="500"
                   value={customGlucoseInput}
                   onChange={(e) => setCustomGlucoseInput(e.target.value)}
-                  placeholder="Enter mg/dL..."
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white"
+                  className="w-16 px-1.5 py-0.5 rounded bg-slate-900 border border-emerald-500 text-white text-xs font-mono font-bold"
+                  autoFocus
                 />
-                <button
-                  type="submit"
-                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
-                >
-                  {lang === 'ar' ? 'حفظ' : 'Set'}
+                <button type="submit" className="text-[10px] px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">
+                  ✓
                 </button>
               </form>
-            </div>
-          )}
+            ) : (
+              <button
+                onClick={() => setIsEditingGlucose(true)}
+                className={`px-2.5 py-0.5 rounded-lg text-xs font-black font-mono transition-transform active:scale-95 ${
+                  isHighGlucose
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse'
+                    : isModerateHigh
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    : isLow
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                }`}
+                title="Click to modify your last blood sugar reading"
+              >
+                {formatGlucose(currentSugarLevel)} ✏️
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Quick glucose simulation chips */}
+        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-900 text-[11px]">
+          <span className="text-slate-400">{lang === 'ar' ? 'جرّب سيناريو سكر الدم:' : 'Simulate Glucose:'}</span>
+          {[
+            { val: 195, label: lang === 'ar' ? 'مرتفع جداً (195 إنذار)' : 'High (195 Alarm)', color: 'text-rose-400 hover:bg-rose-950/40' },
+            { val: 165, label: lang === 'ar' ? 'مرتفع (165)' : 'High (165)', color: 'text-amber-400 hover:bg-amber-950/40' },
+            { val: 110, label: lang === 'ar' ? 'مثالي (110)' : 'Optimal (110)', color: 'text-emerald-400 hover:bg-emerald-950/40' },
+            { val: 72, label: lang === 'ar' ? 'هبوط (72)' : 'Low (72)', color: 'text-blue-400 hover:bg-blue-950/40' },
+          ].map((chip) => (
+            <button
+              key={chip.val}
+              type="button"
+              onClick={() => handleQuickGlucoseSelect(chip.val)}
+              className={`px-2 py-0.5 rounded border border-slate-800 font-mono text-[10px] transition-colors ${chip.color}`}
+            >
+              {chip.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* MULTIPLE PERSONALIZED MEAL OPTIONS SELECTOR (Option 1: Primary, Option 2: Local Kitchen, Option 3: Home Prep) */}
+      {/* 4. MULTI-OPTION MEAL SELECTOR TABS */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
-            {lang === 'ar' ? 'اختر الخيار الأنسب لك الآن:' : 'Select Your Preferred Personalized Option:'}
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-bold text-slate-300 flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-emerald-400" />
+            {lang === 'ar' ? 'الخيارات الصحية المقترحة لوجبتك القادمة:' : 'Select Your Personalized Next-Meal Option:'}
           </span>
-          <span className="text-[11px] text-emerald-400 font-medium">
-            {allMealOptions.length} {lang === 'ar' ? 'خيارات مخصصة' : 'personalized options generated'}
+          <span className="text-[11px] text-emerald-400 font-mono font-bold">
+            {selectedOptionIndex + 1} / {allMealOptions.length}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {allMealOptions.map((opt, idx) => {
-            const isSelected = selectedOptionIndex === idx;
+            const isSelected = idx === selectedOptionIndex;
             return (
               <button
                 key={idx}
@@ -367,35 +452,27 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
                 onClick={() => setSelectedOptionIndex(idx)}
                 className={`p-3 rounded-2xl border text-left rtl:text-right transition-all flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-emerald-950/50 border-emerald-500 text-white shadow-lg shadow-emerald-950/40 ring-1 ring-emerald-500/50'
-                    : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'bg-gradient-to-br from-emerald-950/80 to-slate-900 border-emerald-500 shadow-lg ring-2 ring-emerald-500/20'
+                    : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700'
                 }`}
               >
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${
-                      isSelected ? 'text-emerald-400' : 'text-slate-500'
-                    }`}>
-                      {idx === 0
-                        ? (lang === 'ar' ? '⭐ الخيار السريري الأفضل' : '⭐ Clinical Primary')
-                        : idx === 1
-                        ? (lang === 'ar' ? '🍲 مطبخ قطري معتمد' : '🍲 Qatari Kitchen Partner')
-                        : (lang === 'ar' ? '⚡ تحضير منزلي سريع' : '⚡ Quick Home Prep')}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {opt.optionLabel?.[l] || opt.badge?.[l] || (lang === 'ar' ? `الخيار ${idx + 1}` : `Option ${idx + 1}`)}
                     </span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                      {opt.sugarGrams}g sugar
+                    </span>
                   </div>
-
-                  <h5 className="text-xs font-bold text-white line-clamp-1">
+                  <h4 className="text-xs font-bold text-white line-clamp-1 mt-1">
                     {opt.dishName[l]}
-                  </h5>
+                  </h4>
                 </div>
 
-                <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-400">
-                  <span className="text-emerald-300 font-semibold">{opt.sugarGrams}g sugar</span>
-                  <span>•</span>
-                  <span>{opt.carbsGrams}g carbs</span>
-                  <span>•</span>
-                  <span>{opt.proteinGrams}g protein</span>
+                <div className="pt-2 mt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+                  <span>{opt.targetMealType.toUpperCase()}</span>
+                  <span className="font-bold text-emerald-400">{opt.calories} kcal</span>
                 </div>
               </button>
             );
@@ -403,46 +480,32 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
         </div>
       </div>
 
-      {/* ACTIVE SELECTED MEAL HERO CARD */}
-      <div className="bg-slate-950 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div className="flex gap-3.5 items-start">
+      {/* 5. ACTIVE SELECTED MEAL CARD DETAILS */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+        
+        {/* DISH HERO */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-900 pb-3">
+          <div className="flex items-center gap-3">
             <img
               src={activeSuggestion.imageUrl}
               alt={activeSuggestion.dishName[l]}
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover shrink-0 border border-slate-800 shadow-md"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border border-slate-800 shrink-0"
             />
-            <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  {lang === 'ar'
-                    ? `الوجبة القادمة (${
-                        activeSuggestion.targetMealType === 'breakfast'
-                          ? 'فطور'
-                          : activeSuggestion.targetMealType === 'lunch'
-                          ? 'غداء'
-                          : activeSuggestion.targetMealType === 'dinner'
-                          ? 'عشاء'
-                          : 'سناك خفيف'
-                      })`
-                    : `Next ${
-                        activeSuggestion.targetMealType.charAt(0).toUpperCase() +
-                        activeSuggestion.targetMealType.slice(1)
-                      }`}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                  {activeSuggestion.targetMealType.toUpperCase()} RECOMMENDATION
                 </span>
-                <span className="text-[10px] font-bold text-slate-400">
-                  📍 {activeSuggestion.kitchenOrLocation[l]}
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+                  Low-GI
                 </span>
               </div>
-
-              <h4 className="text-base sm:text-lg font-black text-white leading-tight">
+              <h4 className="text-base sm:text-lg font-black text-white mt-0.5">
                 {activeSuggestion.dishName[l]}
               </h4>
-
-              {/* Macro Pills */}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap pt-0.5">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  {activeSuggestion.sugarGrams}g Sugar ({activeSuggestion.addedSugarGrams}g Added)
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  {activeSuggestion.sugarGrams}g Total Sugar • {activeSuggestion.addedSugarGrams}g Added
                 </span>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
                   {activeSuggestion.carbsGrams}g Carbs
@@ -460,7 +523,7 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
           {activeSuggestion.priceQAR && (
             <div className="text-left rtl:text-right shrink-0">
               <span className="text-xs font-bold text-slate-400 block">
-                {lang === 'ar' ? 'السعر في قطر' : 'Estimated Price'}
+                {lang === 'ar' ? 'السعر التقديري' : 'Estimated Price'}
               </span>
               <span className="text-lg font-black text-emerald-400">
                 {activeSuggestion.priceQAR} QAR
@@ -469,7 +532,7 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
           )}
         </div>
 
-        {/* CLINICAL RATIONALE: Linking Historical Meals + Sugar Level */}
+        {/* CLINICAL RATIONALE */}
         <div className="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800/80 space-y-2">
           <div className="flex items-center gap-2">
             <Info className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -518,7 +581,7 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
           </button>
         </div>
 
-        {/* ACTION BUTTONS: ORDER OR RECORD */}
+        {/* 6. PRIMARY ACTION BUTTONS: ORDER RECOMMENDED FOOD OR LOG */}
         <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Button 1: "I Ate This Meal (Log as Taken)" */}
           <button
@@ -538,8 +601,8 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
             </span>
           </button>
 
-          {/* Button 2: 2-3 Clicks Food Order from Qatari Partner Kitchen */}
-          {matchedKitchenMeal ? (
+          {/* Button 2: Option to Order the Recommended Food on Time via Qatar Food Providers */}
+          {matchedKitchenMeal && (
             <button
               type="button"
               onClick={() => openOrderModalForMeal(matchedKitchenMeal)}
@@ -548,18 +611,9 @@ export const NextMealRecommendationCard: React.FC<NextMealRecommendationCardProp
               <ShoppingBag className="w-4 h-4" />
               <span>
                 {lang === 'ar'
-                  ? `طلب الوجبة من ${matchedKitchenMeal.deliveryKitchenName.ar.split('(')[0]} (نقرتين)`
-                  : `Order from ${matchedKitchenMeal.deliveryKitchenName.en.split('(')[0]} (2 Clicks)`}
+                  ? `طلب الوجبة الموصى بها في موعدها (${matchedKitchenMeal.deliveryKitchenName.ar.split('(')[0]})`
+                  : `Order Recommended Food on Time (${matchedKitchenMeal.deliveryKitchenName.en.split('(')[0]})`}
               </span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onOpenMealLogger}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5"
-            >
-              <Utensils className="w-3.5 h-3.5" />
-              <span>{lang === 'ar' ? 'تسجيل وجبة بديلة' : 'Log Alternative Meal'}</span>
             </button>
           )}
         </div>

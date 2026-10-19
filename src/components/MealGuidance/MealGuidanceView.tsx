@@ -35,6 +35,7 @@ import {
   Clock,
   PlusCircle,
   HeartPulse,
+  BarChart3,
 } from 'lucide-react';
 
 export const MealGuidanceView: React.FC = () => {
@@ -49,6 +50,9 @@ export const MealGuidanceView: React.FC = () => {
     orders,
     isMealLoggerOpen,
     setIsMealLoggerOpen,
+    todaySugarIntake,
+    currentSugarLevel,
+    setActiveTab,
   } = useApp();
 
   const [selectedMeal, setSelectedMeal] = useState<MealDish | null>(null);
@@ -188,41 +192,137 @@ export const MealGuidanceView: React.FC = () => {
 
   return (
     <div className="space-y-5 pb-24 max-w-4xl mx-auto px-4 pt-4">
-      {/* Banner */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Utensils className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-semibold text-emerald-400">
-                {lang === 'ar' ? 'المطاعم • المجالس • الكافتيريات' : 'Restaurants • Majlis • Dining Out'}
+      {/* VIBRANT MOBILE-FIRST HERO COMMAND CENTER */}
+      <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 p-4 sm:p-5 shadow-2xl space-y-3.5">
+        {/* Top Glycemic & Sugar Budget Ring Strip */}
+        <div className="flex items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-3">
+            {/* Visual Circular Sugar Meter */}
+            <div className="relative w-11 h-11 flex items-center justify-center shrink-0">
+              <svg className="w-11 h-11 -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-slate-800"
+                  strokeWidth="3.5"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path
+                  className={todaySugarIntake > 25 ? 'text-rose-500' : todaySugarIntake > 18 ? 'text-amber-400' : 'text-emerald-400'}
+                  strokeDasharray={`${Math.min(100, Math.round((todaySugarIntake / 25) * 100))}, 100`}
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+              </svg>
+              <span className="absolute text-[10px] font-black font-mono text-white">
+                {todaySugarIntake}g
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-              {t.mealTitle}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-              {t.mealSubtitle}
-            </p>
+
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                {lang === 'ar' ? 'ميزانية السكر اليومية (WHO 25g)' : 'Today’s Sugar Budget (WHO)'}
+              </span>
+              <div className="text-xs font-bold text-white flex items-center gap-1.5 mt-0.5">
+                <span>
+                  {25 - todaySugarIntake > 0
+                    ? `${(25 - todaySugarIntake).toFixed(1)}g ${lang === 'ar' ? 'متبقية' : 'left'}`
+                    : (lang === 'ar' ? 'تجاوزت الحد' : 'Limit Exceeded')}
+                </span>
+                <span className="text-slate-500">•</span>
+                <span className="text-slate-300 font-mono text-[11px]">
+                  {lang === 'ar' ? 'سكر الدم:' : 'Glucose:'} <strong className="text-emerald-400">{formatGlucose(currentSugarLevel)}</strong>
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-            <button
-              onClick={() => setIsScienceWorkbenchOpen(true)}
-              className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-700/60 text-cyan-200 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95"
-            >
-              <Beaker className="w-4 h-4 text-cyan-400" />
-              <span>{lang === 'ar' ? 'كيمياء السكر (PubChem)' : 'Sugar Chemistry (PubChem)'}</span>
-            </button>
+          {/* Quick Log Meal Button */}
+          <button
+            onClick={() => setIsMealLoggerOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950 active:scale-95 transition-all shrink-0"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>{lang === 'ar' ? 'سجل وجبة' : 'Log Meal'}</span>
+          </button>
+        </div>
 
-            <button
-              onClick={() => setIsSugarCalculatorOpen(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-950 transition-all active:scale-95"
-            >
+        {/* 4 Interactive Quick Action Cards (2x2 Grid) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {/* Action 1: AI Food Sugar Counter */}
+          <button
+            onClick={() => setIsSugarCalculatorOpen(true)}
+            className="p-3 rounded-2xl bg-gradient-to-br from-emerald-950/60 to-slate-900 border border-emerald-500/40 hover:border-emerald-400 text-left rtl:text-right transition-all active:scale-95 flex flex-col justify-between group shadow-sm"
+          >
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
               <Sparkles className="w-4 h-4" />
-              <span>{lang === 'ar' ? 'حساب السكر من الصورة (AI)' : 'Food Photo Sugar Counter (AI)'}</span>
-            </button>
-          </div>
+            </div>
+            <div>
+              <span className="text-xs font-black text-white block group-hover:text-emerald-300 transition-colors">
+                {lang === 'ar' ? 'عداد السكر بالذكاء' : 'AI Sugar Scanner'}
+              </span>
+              <span className="text-[10px] text-slate-400 block line-clamp-1">
+                {lang === 'ar' ? 'حساب السكر من الصورة' : 'Photo Sugar Count'}
+              </span>
+            </div>
+          </button>
+
+          {/* Action 2: Order Recommended On-Time Dish */}
+          <a
+            href="#next-meal-card-anchor"
+            className="p-3 rounded-2xl bg-gradient-to-br from-teal-950/60 to-slate-900 border border-teal-500/40 hover:border-teal-400 text-left rtl:text-right transition-all active:scale-95 flex flex-col justify-between group shadow-sm"
+          >
+            <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <ShoppingBag className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-black text-white block group-hover:text-teal-300 transition-colors">
+                {lang === 'ar' ? 'طلب وجبة في موعدها' : 'Order On-Time'}
+              </span>
+              <span className="text-[10px] text-slate-400 block line-clamp-1">
+                {lang === 'ar' ? 'مطاعم قطر (0-3غ سكر)' : 'Qatar Food Delivery'}
+              </span>
+            </div>
+          </a>
+
+          {/* Action 3: PubChem Sugar Science */}
+          <button
+            onClick={() => setIsScienceWorkbenchOpen(true)}
+            className="p-3 rounded-2xl bg-gradient-to-br from-cyan-950/60 to-slate-900 border border-cyan-500/40 hover:border-cyan-400 text-left rtl:text-right transition-all active:scale-95 flex flex-col justify-between group shadow-sm"
+          >
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Beaker className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-black text-white block group-hover:text-cyan-300 transition-colors">
+                {lang === 'ar' ? 'كيمياء السكر' : 'Sugar Chemistry'}
+              </span>
+              <span className="text-[10px] text-slate-400 block line-clamp-1">
+                {lang === 'ar' ? 'بيانات PubChem' : 'PubChem Science'}
+              </span>
+            </div>
+          </button>
+
+          {/* Action 4: Weekly Trends Analytics */}
+          <button
+            onClick={() => setActiveTab('heart')}
+            className="p-3 rounded-2xl bg-gradient-to-br from-purple-950/60 to-slate-900 border border-purple-500/40 hover:border-purple-400 text-left rtl:text-right transition-all active:scale-95 flex flex-col justify-between group shadow-sm"
+          >
+            <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <BarChart3 className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-black text-white block group-hover:text-purple-300 transition-colors">
+                {lang === 'ar' ? 'مخطط ريتشارتس' : 'Weekly Trends'}
+              </span>
+              <span className="text-[10px] text-slate-400 block line-clamp-1">
+                {lang === 'ar' ? 'تحليل السكر التراكمي' : 'Recharts & HbA1c'}
+              </span>
+            </div>
+          </button>
         </div>
       </div>
 

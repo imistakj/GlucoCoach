@@ -28,7 +28,7 @@ interface RecordedMealsHistoryCardProps {
 export const RecordedMealsHistoryCard: React.FC<RecordedMealsHistoryCardProps> = ({
   onOpenMealLogger,
 }) => {
-  const { lang, t, recordedMeals, deleteRecordedMeal, formatGlucose } = useApp();
+  const { lang, t, recordedMeals, deleteRecordedMeal, formatGlucose, setActiveTab } = useApp();
   const [isExpanded, setIsExpanded] = useState(true);
   const [filter, setFilter] = useState<'all' | 'today' | 'high_sugar'>('all');
 
@@ -78,7 +78,18 @@ export const RecordedMealsHistoryCard: React.FC<RecordedMealsHistoryCardProps> =
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={() => setActiveTab('heart')}
+            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all shadow-sm"
+            title={lang === 'ar' ? 'عرض التحليل الأسبوعي ومخطط ريتشارتس' : 'View Weekly Recharts Trends'}
+          >
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">
+              {lang === 'ar' ? 'تحليل ريتشارتس الأسبوعي' : 'Weekly Trends'}
+            </span>
+          </button>
+
           <button
             onClick={onOpenMealLogger}
             className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 active:scale-95 transition-all shadow-md"

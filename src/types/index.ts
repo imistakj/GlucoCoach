@@ -198,6 +198,44 @@ export interface KitchenMealItem {
   category: 'grills' | 'traditional' | 'seafood' | 'breakfast' | 'beverages';
 }
 
+export interface QatarFoodProvider {
+  id: string;
+  name: { en: string; ar: string };
+  tagline: { en: string; ar: string };
+  logoText: string;
+  accentColor: string;
+  deliveryFeeQAR: number;
+  deliveryTimeMin: number;
+  isAutomatedSupported: boolean;
+  rating: number;
+}
+
+export interface AutoMealOrderConfig {
+  enabled: boolean;
+  preferredProviderId: string;
+  lunchTime: string; // e.g. "12:30"
+  dinnerTime: string; // e.g. "19:00"
+  maxSugarGramsPerMeal: number; // e.g. 5
+  autoConfirmWithoutPrompt: boolean;
+  deliveryAddress: string;
+  deliveryZone: string;
+  lastAutoOrderedAt?: string;
+}
+
+export interface HighSugarAlarmInfo {
+  glucose: number;
+  consecutiveHighCount: number;
+  isPersistent: boolean;
+  clinicName: string;
+  clinicPhone: string;
+  doctorName?: string;
+  severity: 'WARNING' | 'CRITICAL';
+  suggestedAction: {
+    en: string;
+    ar: string;
+  };
+}
+
 export interface KitchenFoodOrder {
   id: string;
   meal: KitchenMealItem;
@@ -212,6 +250,9 @@ export interface KitchenFoodOrder {
   selectedMods: string[];
   placedAt: string;
   estimatedDeliveryTime: string;
+  providerId?: string;
+  providerName?: string;
+  isAutomated?: boolean;
 }
 
 export interface UserProfile {

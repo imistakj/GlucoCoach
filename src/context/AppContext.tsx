@@ -13,9 +13,12 @@ import {
   NextMealSuggestion,
   PersonalizedNextMealPlan,
   MealType,
+  QatarFoodProvider,
+  AutoMealOrderConfig,
+  HighSugarAlarmInfo,
 } from '../types';
 import { QATAR_SUPERMARKET_PRODUCTS } from '../data/qatarProducts';
-import { QATAR_HEALTHY_MEALS } from '../data/qatarKitchens';
+import { QATAR_HEALTHY_MEALS, DUMMY_QATAR_FOOD_PROVIDERS } from '../data/qatarKitchens';
 import { translations } from '../data/translations';
 import { generateNextMealSuggestion, generatePersonalizedNextMealPlan } from '../services/nextMealEngine';
 import {
@@ -57,14 +60,16 @@ interface AppContextType {
   isMealLoggerOpen: boolean;
   setIsMealLoggerOpen: (open: boolean) => void;
   
-  // Qatari Kitchens & Food Orders
+  // Qatari Kitchens & Food Orders & Dummy Qatar Providers
   orders: KitchenFoodOrder[];
+  foodProviders: QatarFoodProvider[];
   placeKitchenOrder: (
     meal: KitchenMealItem,
     quantity?: number,
     selectedMods?: string[],
     deliveryAddress?: string,
-    specialNotes?: string
+    specialNotes?: string,
+    providerId?: string
   ) => KitchenFoodOrder;
   activeKitchenOrder: KitchenFoodOrder | null;
   setActiveKitchenOrder: (order: KitchenFoodOrder | null) => void;
@@ -73,6 +78,17 @@ interface AppContextType {
   openOrderModalForMeal: (meal: KitchenMealItem) => void;
   isOrderModalOpen: boolean;
   setIsOrderModalOpen: (open: boolean) => void;
+
+  // Automated On-Time Meal Ordering
+  autoMealOrderConfig: AutoMealOrderConfig;
+  updateAutoMealOrderConfig: (config: Partial<AutoMealOrderConfig>) => void;
+  triggerAutoMealOrderNow: (mealType?: MealType) => KitchenFoodOrder;
+
+  // High Sugar Health Monitor & Clinic Alarm
+  isHighSugarAlarmOpen: boolean;
+  setIsHighSugarAlarmOpen: (open: boolean) => void;
+  highSugarAlarmInfo: HighSugarAlarmInfo | null;
+  triggerHighSugarAlarm: (glucoseVal: number) => void;
   
   // Smart Basket
   basket: BasketItem[];
@@ -117,6 +133,10 @@ interface AppContextType {
   // Database & Patient Data Sovereignty
   databaseConnected: boolean;
   exportDatabase: () => string;
+
+  // Mobile App View Simulator Mode
+  isMobileSimulator: boolean;
+  setIsMobileSimulator: (val: boolean) => void;
 }
 
 const defaultProfile: UserProfile = {
@@ -467,9 +487,9 @@ const initialRecordedMeals: RecordedMeal[] = [
     name: 'Baladna Shakshouka & Wholewheat Khubz',
     nameAr: 'شكشوكة بلدنا الطازجة مع خبز بر أسمر',
     mealType: 'breakfast',
-    takenAt: new Date(Date.now() - 3.5 * 3600 * 1000).toISOString(),
+    takenAt: '2026-10-10T08:45:00.000Z',
     displayTime: '08:45 AM',
-    displayDate: 'Today',
+    displayDate: 'Oct 10',
     sugarGrams: 2.8,
     addedSugarGrams: 0,
     carbsGrams: 22,
@@ -484,43 +504,263 @@ const initialRecordedMeals: RecordedMeal[] = [
   },
   {
     id: 'meal-rec-2',
-    name: 'Grilled Sea Bass with Lemon Daqoos & Rocca',
+    name: 'Grilled Mazzraty Chicken Breast with Tabbouleh',
+    nameAr: 'صدر دجاج مزرعتي مشوي مع تبولة بزيت الزيتون',
+    mealType: 'lunch',
+    takenAt: '2026-10-10T13:15:00.000Z',
+    displayTime: '01:15 PM',
+    displayDate: 'Oct 10',
+    sugarGrams: 1.5,
+    addedSugarGrams: 0,
+    carbsGrams: 14,
+    proteinGrams: 42,
+    calories: 390,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 122,
+    glucoseTiming: 'post_meal',
+    imageUrl: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=500&q=80',
+    source: 'kitchen_order',
+    notes: 'High fiber, zero added sugar, flat post-prandial response',
+  },
+  {
+    id: 'meal-rec-3',
+    name: 'Low-fat Baladna Labneh with Cucumbers & Mint',
+    nameAr: 'لبنة بلدنا قليلة الدسم مع خيار ونعناع وزيت زيتون',
+    mealType: 'breakfast',
+    takenAt: '2026-10-09T08:30:00.000Z',
+    displayTime: '08:30 AM',
+    displayDate: 'Oct 09',
+    sugarGrams: 3.5,
+    addedSugarGrams: 0,
+    carbsGrams: 8,
+    proteinGrams: 14,
+    calories: 220,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 104,
+    glucoseTiming: 'fasting',
+    imageUrl: 'https://images.unsplash.com/photo-1505253758473-96b3d5ebcd96?auto=format&fit=crop&w=500&q=80',
+    source: 'quick_log',
+    notes: 'Natural lactose only, zero added sucrose',
+  },
+  {
+    id: 'meal-rec-4',
+    name: 'Bandar Aden Grilled Sea Bass with Lemon Daqoos',
     nameAr: 'سيباس مشوي مع دقوس بالليمون وسلطة جرجير',
     mealType: 'dinner',
-    takenAt: new Date(Date.now() - 15 * 3600 * 1000).toISOString(),
+    takenAt: '2026-10-09T20:15:00.000Z',
     displayTime: '08:15 PM',
-    displayDate: 'Yesterday',
+    displayDate: 'Oct 09',
     sugarGrams: 0.5,
     addedSugarGrams: 0,
     carbsGrams: 5,
     proteinGrams: 44,
     calories: 380,
     spikeRisk: 'LOW',
-    glucoseAtMeal: 122,
+    glucoseAtMeal: 135,
     glucoseTiming: 'post_meal',
     imageUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=500&q=80',
     source: 'kitchen_order',
-    notes: 'Zero rice protocol from Bandar Aden, flat glucose curve',
+    notes: 'Zero rice protocol from Souq Waqif, optimal glycemic control',
   },
   {
-    id: 'meal-rec-3',
-    name: 'Traditional Chicken Machboos & Luqaimat',
-    nameAr: 'مجبوس دجاج تقليدي مع حبات لقيمات',
-    mealType: 'lunch',
-    takenAt: new Date(Date.now() - 22 * 3600 * 1000).toISOString(),
-    displayTime: '01:30 PM',
-    displayDate: 'Yesterday',
-    sugarGrams: 16.5,
-    addedSugarGrams: 12,
-    carbsGrams: 82,
-    proteinGrams: 32,
-    calories: 780,
+    id: 'meal-rec-5',
+    name: 'Boiled Farm Eggs with Sliced Avocado & Thyme',
+    nameAr: 'بيض مزارع مسلوق مع أفوكادو وزعتر بري',
+    mealType: 'breakfast',
+    takenAt: '2026-10-08T08:00:00.000Z',
+    displayTime: '08:00 AM',
+    displayDate: 'Oct 08',
+    sugarGrams: 0.8,
+    addedSugarGrams: 0,
+    carbsGrams: 4,
+    proteinGrams: 18,
+    calories: 280,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 106,
+    glucoseTiming: 'fasting',
+    imageUrl: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=500&q=80',
+    source: 'ai_photo',
+    notes: 'High monounsaturated healthy fats, minimal insulin demand',
+  },
+  {
+    id: 'meal-rec-6',
+    name: 'Steamed Gulf Hamour with Sautéed Broccoli & Cumin',
+    nameAr: 'فيليه هامور خليجي بالبخار مع بروكلي سوتيه وكمون',
+    mealType: 'dinner',
+    takenAt: '2026-10-08T19:30:00.000Z',
+    displayTime: '07:30 PM',
+    displayDate: 'Oct 08',
+    sugarGrams: 2.2,
+    addedSugarGrams: 0,
+    carbsGrams: 12,
+    proteinGrams: 40,
+    calories: 360,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 118,
+    glucoseTiming: 'post_meal',
+    imageUrl: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=500&q=80',
+    source: 'kitchen_order',
+    notes: 'Portion controlled, 0g added sugar',
+  },
+  {
+    id: 'meal-rec-7',
+    name: 'Foul Mudammas with Olive Oil, Lemon & Parsley',
+    nameAr: 'فول مدمس بزيت الزيتون والليمون والبقدونس',
+    mealType: 'breakfast',
+    takenAt: '2026-10-07T08:30:00.000Z',
+    displayTime: '08:30 AM',
+    displayDate: 'Oct 07',
+    sugarGrams: 2.0,
+    addedSugarGrams: 0,
+    carbsGrams: 28,
+    proteinGrams: 16,
+    calories: 310,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 128,
+    glucoseTiming: 'fasting',
+    imageUrl: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=500&q=80',
+    source: 'quick_log',
+    notes: 'High dietary fiber blunts morning fasting response',
+  },
+  {
+    id: 'meal-rec-8',
+    name: 'Grilled Lamb Chops with Sumac & Crisp Garden Salad',
+    nameAr: 'ريش لحم مشوية بالسماق مع سلطة خضراء',
+    mealType: 'dinner',
+    takenAt: '2026-10-07T20:00:00.000Z',
+    displayTime: '08:00 PM',
+    displayDate: 'Oct 07',
+    sugarGrams: 1.2,
+    addedSugarGrams: 0,
+    carbsGrams: 6,
+    proteinGrams: 36,
+    calories: 450,
+    spikeRisk: 'MEDIUM',
+    glucoseAtMeal: 145,
+    glucoseTiming: 'post_meal',
+    imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=500&q=80',
+    source: 'kitchen_order',
+    notes: 'Lean protein dinner, moderate satiety',
+  },
+  {
+    id: 'meal-rec-9',
+    name: 'Sweetened Cardamom Karak with Condensed Milk',
+    nameAr: 'كرك قطري محلى بحليب مكثف وهيل',
+    mealType: 'snack',
+    takenAt: '2026-10-06T16:30:00.000Z',
+    displayTime: '04:30 PM',
+    displayDate: 'Oct 06',
+    sugarGrams: 22.0,
+    addedSugarGrams: 20.0,
+    carbsGrams: 24,
+    proteinGrams: 4,
+    calories: 210,
     spikeRisk: 'HIGH',
-    glucoseAtMeal: 168,
+    glucoseAtMeal: 160,
+    glucoseTiming: 'post_meal',
+    imageUrl: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=500&q=80',
+    source: 'ai_photo',
+    notes: 'Friday Majlis hospitality: high sucrose and condensed milk spike',
+  },
+  {
+    id: 'meal-rec-10',
+    name: 'Traditional Chicken Machboos & Luqaimat in Date Syrup',
+    nameAr: 'مجبوس دجاج تقليدي مع لقيمات مقرمشة بدبس التمر',
+    mealType: 'dinner',
+    takenAt: '2026-10-06T20:30:00.000Z',
+    displayTime: '08:30 PM',
+    displayDate: 'Oct 06',
+    sugarGrams: 26.0,
+    addedSugarGrams: 18.0,
+    carbsGrams: 98,
+    proteinGrams: 30,
+    calories: 820,
+    spikeRisk: 'HIGH',
+    glucoseAtMeal: 195,
     glucoseTiming: 'post_meal',
     imageUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=500&q=80',
     source: 'ai_photo',
-    notes: 'Large portion at Majlis with sweetened tea',
+    notes: 'Friday Banquet: High glycemic load + date molasses triggered 195 spike',
+  },
+  {
+    id: 'meal-rec-11',
+    name: 'Baladna Grilled Halloumi with Fresh Tomatoes & Rocca',
+    nameAr: 'حلوم بلدنا مشوي مع طماطم وجرجير طازج',
+    mealType: 'breakfast',
+    takenAt: '2026-10-05T08:15:00.000Z',
+    displayTime: '08:15 AM',
+    displayDate: 'Oct 05',
+    sugarGrams: 1.8,
+    addedSugarGrams: 0,
+    carbsGrams: 4,
+    proteinGrams: 22,
+    calories: 310,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 108,
+    glucoseTiming: 'fasting',
+    imageUrl: 'https://images.unsplash.com/photo-1592417817098-8f3d69109853?auto=format&fit=crop&w=500&q=80',
+    source: 'quick_log',
+    notes: 'Zero added sugar, calm fasting baseline',
+  },
+  {
+    id: 'meal-rec-12',
+    name: 'Charcoal Shish Tawook with Roasted Garlic & Green Peppers',
+    nameAr: 'شيش طاووق على الفحم مع ثومية مشوية وفلفل أخضر',
+    mealType: 'lunch',
+    takenAt: '2026-10-05T13:45:00.000Z',
+    displayTime: '01:45 PM',
+    displayDate: 'Oct 05',
+    sugarGrams: 2.5,
+    addedSugarGrams: 0,
+    carbsGrams: 10,
+    proteinGrams: 40,
+    calories: 410,
+    spikeRisk: 'MEDIUM',
+    glucoseAtMeal: 142,
+    glucoseTiming: 'post_meal',
+    imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=500&q=80',
+    source: 'kitchen_order',
+    notes: 'High protein lean poultry, mild elevation',
+  },
+  {
+    id: 'meal-rec-13',
+    name: 'Organic Scrambled Eggs with Spinach & Unsweetened Laban',
+    nameAr: 'بيض مخفوق عضوي مع سبانخ ولبن خالي الدسم بدون سكر',
+    mealType: 'breakfast',
+    takenAt: '2026-10-04T08:30:00.000Z',
+    displayTime: '08:30 AM',
+    displayDate: 'Oct 04',
+    sugarGrams: 4.0,
+    addedSugarGrams: 0,
+    carbsGrams: 8,
+    proteinGrams: 24,
+    calories: 320,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 102,
+    glucoseTiming: 'fasting',
+    imageUrl: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=500&q=80',
+    source: 'ai_photo',
+    notes: 'Balanced micronutrients and flat glycemic start',
+  },
+  {
+    id: 'meal-rec-14',
+    name: 'Bandar Aden Charcoal Kingfish with Tomato Daqoos',
+    nameAr: 'كنعد مشوي على الفحم مع دقوس طماطم وأعشاب',
+    mealType: 'dinner',
+    takenAt: '2026-10-04T19:45:00.000Z',
+    displayTime: '07:45 PM',
+    displayDate: 'Oct 04',
+    sugarGrams: 0.8,
+    addedSugarGrams: 0,
+    carbsGrams: 6,
+    proteinGrams: 45,
+    calories: 420,
+    spikeRisk: 'LOW',
+    glucoseAtMeal: 138,
+    glucoseTiming: 'post_meal',
+    imageUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=500&q=80',
+    source: 'kitchen_order',
+    notes: 'Rich in Omega-3 fatty acids, excellent cardiovascular profile',
   },
 ];
 
@@ -574,7 +814,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('glucocoach_recorded_meals');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= 7) {
+          return parsed;
+        }
       } catch (e) {
         console.error(e);
       }
@@ -596,9 +839,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return 126;
   });
 
+  // High Sugar Health Monitor & Clinic Alarm State
+  const [isHighSugarAlarmOpen, setIsHighSugarAlarmOpen] = useState(false);
+  const [highSugarAlarmInfo, setHighSugarAlarmInfo] = useState<HighSugarAlarmInfo | null>(null);
+
+  const triggerHighSugarAlarm = (glucoseVal: number) => {
+    const isCritical = glucoseVal >= 250;
+    const info: HighSugarAlarmInfo = {
+      glucose: glucoseVal,
+      consecutiveHighCount: 2,
+      isPersistent: true,
+      clinicName: defaultProfile.healthCenter || 'Al Sadd Primary Health Care Center (PHCC)',
+      clinicPhone: '+974 4492 4222',
+      doctorName: defaultProfile.primaryDoctor || 'Dr. Fatima Al-Sulaiti (Endocrinology)',
+      severity: isCritical ? 'CRITICAL' : 'WARNING',
+      suggestedAction: {
+        en: 'Drink 500mL pure water, eat an on-time zero-sugar stabilizer meal, and contact your PHCC doctor immediately.',
+        ar: 'اشرب نصف لتر ماء فوراً، وتناول وجبة صحية خالية من السكر في موعدها، وتواصل مع طبيبك في المركز الصحي.',
+      },
+    };
+    setHighSugarAlarmInfo(info);
+    setIsHighSugarAlarmOpen(true);
+  };
+
   const setCurrentSugarLevel = (val: number) => {
     setCurrentSugarLevelState(val);
     localStorage.setItem('glucocoach_current_glucose', String(val));
+    if (val >= 180) {
+      triggerHighSugarAlarm(val);
+    }
   };
 
   // Daily Check-Ins & Heart Guard
@@ -700,6 +969,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const [isMealLoggerOpen, setIsMealLoggerOpen] = useState(false);
+  const [isMobileSimulator, setIsMobileSimulator] = useState<boolean>(false);
 
   const lastRecordedMeal = recordedMeals[0];
 
@@ -843,13 +1113,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     quantity = 1,
     selectedMods: string[] = [],
     deliveryAddress = 'Al Sadd, Zone 38, Doha',
-    specialNotes = ''
+    specialNotes = '',
+    providerId?: string
   ): KitchenFoodOrder => {
+    const matchedProvider = providerId
+      ? DUMMY_QATAR_FOOD_PROVIDERS.find((p) => p.id === providerId)
+      : DUMMY_QATAR_FOOD_PROVIDERS[0];
+
+    const providerFee = matchedProvider ? matchedProvider.deliveryFeeQAR : 10;
+    const providerName = matchedProvider ? matchedProvider.name.en : 'Talabat Qatar';
+
     const newOrder: KitchenFoodOrder = {
       id: 'ord-' + Date.now(),
       meal,
       quantity,
-      totalQAR: meal.priceQAR * quantity,
+      totalQAR: meal.priceQAR * quantity + providerFee,
       status: 'confirmed',
       customerName: userProfile.name || 'Salem Al-Kuwari',
       customerPhone: userProfile.emergencyContact?.phone || '+974 5512 8493',
@@ -858,7 +1136,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       specialNotes,
       selectedMods,
       placedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      estimatedDeliveryTime: '25-30 mins',
+      estimatedDeliveryTime: `${matchedProvider?.deliveryTimeMin || 25} mins (${providerName})`,
+      providerId: matchedProvider?.id || 'provider-talabat',
+      providerName,
+      isAutomated: false,
     };
 
     setOrders((prev) => [newOrder, ...prev]);
@@ -894,7 +1175,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       glucoseTiming: 'post_meal',
       imageUrl: meal.imageUrl,
       source: 'kitchen_order',
-      notes: `Ordered from ${meal.deliveryKitchenName.en}`,
+      notes: `Ordered on time via ${providerName} (${meal.deliveryKitchenName.en})`,
     };
     setRecordedMeals((prev) => [loggedMeal, ...prev]);
     persistRecordedMeal(loggedMeal);
@@ -915,6 +1196,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 9000);
 
     return newOrder;
+  };
+
+  // Automated On-Time Meal Order Configuration
+  const [autoMealOrderConfig, setAutoMealOrderConfigState] = useState<AutoMealOrderConfig>(() => {
+    const saved = localStorage.getItem('glucocoach_auto_meal_order');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return {
+      enabled: false,
+      preferredProviderId: 'provider-talabat',
+      lunchTime: '12:30',
+      dinnerTime: '19:00',
+      maxSugarGramsPerMeal: 5,
+      autoConfirmWithoutPrompt: false,
+      deliveryAddress: 'Building 14, St 840, Al Sadd, Doha',
+      deliveryZone: 'Al Sadd, Zone 38, Doha',
+    };
+  });
+
+  const updateAutoMealOrderConfig = (updates: Partial<AutoMealOrderConfig>) => {
+    setAutoMealOrderConfigState((prev) => {
+      const next = { ...prev, ...updates };
+      localStorage.setItem('glucocoach_auto_meal_order', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const triggerAutoMealOrderNow = (mealType?: MealType): KitchenFoodOrder => {
+    const currentHour = new Date().getHours();
+    const targetType: MealType =
+      mealType ||
+      (currentHour < 11
+        ? 'breakfast'
+        : currentHour < 16
+        ? 'lunch'
+        : currentHour < 21
+        ? 'dinner'
+        : 'snack');
+
+    // Pick lowest-sugar meal available (<5g total sugar)
+    const lowSugarMeals = QATAR_HEALTHY_MEALS.filter(
+      (m) => m.sugarGrams <= (autoMealOrderConfig.maxSugarGramsPerMeal || 5)
+    );
+    const chosenMeal =
+      lowSugarMeals.find((m) => m.category === (targetType === 'breakfast' ? 'breakfast' : 'traditional')) ||
+      lowSugarMeals[0] ||
+      QATAR_HEALTHY_MEALS[0];
+
+    const autoOrder = placeKitchenOrder(
+      chosenMeal,
+      1,
+      ['Diabetic strict portion', 'Zero added sugar', 'Frontload fresh salad'],
+      autoMealOrderConfig.deliveryAddress || 'Al Sadd, Zone 38, Doha',
+      'Automated On-Time Low-Sugar Delivery',
+      autoMealOrderConfig.preferredProviderId || 'provider-talabat'
+    );
+
+    autoOrder.isAutomated = true;
+    updateAutoMealOrderConfig({ lastAutoOrderedAt: new Date().toISOString() });
+    return autoOrder;
   };
 
   // Smart Basket State
@@ -1123,6 +1469,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isMealLoggerOpen,
         setIsMealLoggerOpen,
         orders,
+        foodProviders: DUMMY_QATAR_FOOD_PROVIDERS,
         placeKitchenOrder,
         activeKitchenOrder,
         setActiveKitchenOrder,
@@ -1131,6 +1478,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openOrderModalForMeal,
         isOrderModalOpen,
         setIsOrderModalOpen,
+        autoMealOrderConfig,
+        updateAutoMealOrderConfig,
+        triggerAutoMealOrderNow,
+        isHighSugarAlarmOpen,
+        setIsHighSugarAlarmOpen,
+        highSugarAlarmInfo,
+        triggerHighSugarAlarm,
         basket,
         addToBasket,
         removeFromBasket,
@@ -1161,6 +1515,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateUserProfile,
         databaseConnected,
         exportDatabase,
+        isMobileSimulator,
+        setIsMobileSimulator,
       }}
     >
       {children}
