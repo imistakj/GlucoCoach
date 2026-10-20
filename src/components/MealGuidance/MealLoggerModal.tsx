@@ -239,17 +239,21 @@ export const MealLoggerModal: React.FC<MealLoggerModalProps> = ({ onClose }) => 
   const currentMetrics = calculateSugarScienceMetrics(sugarGrams, carbsGrams);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in">
-      <div className="bg-slate-900 border-2 border-emerald-500/60 rounded-3xl w-full max-w-xl max-h-[94vh] overflow-y-auto shadow-2xl flex flex-col text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in">
+      <div className="bg-slate-900 border-t sm:border-2 border-teal-500/60 rounded-t-3xl sm:rounded-3xl w-full max-w-xl max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col text-slate-100">
+        {/* Mobile Drag Handle */}
+        <div className="pt-2 pb-1 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-slate-700 rounded-full" />
+        </div>
         
         {/* MODAL HEADER */}
-        <div className="bg-slate-950 px-5 py-4 border-b border-slate-800 flex items-center justify-between sticky top-0 z-10">
+        <div className="bg-slate-950 px-5 py-3.5 sm:py-4 border-b border-slate-800 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center shadow-md">
               <Camera className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-teal-400 uppercase tracking-wider block">
                 {lang === 'ar' ? 'نظام تسجيل الوجبات وحساب السكر' : 'Meal Logging & Photo Sugar Counter'}
               </span>
               <h3 className="text-sm sm:text-base font-bold text-white">
@@ -260,7 +264,8 @@ export const MealLoggerModal: React.FC<MealLoggerModalProps> = ({ onClose }) => 
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>

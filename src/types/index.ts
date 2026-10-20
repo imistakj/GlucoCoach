@@ -278,6 +278,18 @@ export interface UserProfile {
   updatedAt?: string;
 }
 
+export interface AppAuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL?: string | null;
+  isAnonymous?: boolean;
+  qatarId?: string;
+  healthCardNumber?: string;
+  patientType?: 'type-2' | 'pre-diabetes' | 'preventative' | 'type-1';
+  loginProvider?: 'email' | 'google' | 'qatar_health' | 'guest';
+}
+
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 export interface RecordedMeal {

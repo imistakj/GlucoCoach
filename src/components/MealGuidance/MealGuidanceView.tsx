@@ -193,10 +193,10 @@ export const MealGuidanceView: React.FC = () => {
   return (
     <div className="space-y-5 pb-24 max-w-4xl mx-auto px-4 pt-4">
       {/* VIBRANT MOBILE-FIRST HERO COMMAND CENTER */}
-      <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 p-4 sm:p-5 shadow-2xl space-y-3.5">
+      <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 p-3.5 sm:p-5 shadow-2xl space-y-3.5">
         {/* Top Glycemic & Sugar Budget Ring Strip */}
-        <div className="flex items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {/* Visual Circular Sugar Meter */}
             <div className="relative w-11 h-11 flex items-center justify-center shrink-0">
               <svg className="w-11 h-11 -rotate-90" viewBox="0 0 36 36">
@@ -208,7 +208,7 @@ export const MealGuidanceView: React.FC = () => {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className={todaySugarIntake > 25 ? 'text-rose-500' : todaySugarIntake > 18 ? 'text-amber-400' : 'text-emerald-400'}
+                  className={todaySugarIntake > 25 ? 'text-rose-500' : todaySugarIntake > 18 ? 'text-amber-400' : 'text-teal-400'}
                   strokeDasharray={`${Math.min(100, Math.round((todaySugarIntake / 25) * 100))}, 100`}
                   strokeWidth="3.5"
                   strokeLinecap="round"
@@ -222,11 +222,11 @@ export const MealGuidanceView: React.FC = () => {
               </span>
             </div>
 
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 block truncate">
                 {lang === 'ar' ? 'ميزانية السكر اليومية (WHO 25g)' : 'Today’s Sugar Budget (WHO)'}
               </span>
-              <div className="text-xs font-bold text-white flex items-center gap-1.5 mt-0.5">
+              <div className="text-xs font-bold text-white flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <span>
                   {25 - todaySugarIntake > 0
                     ? `${(25 - todaySugarIntake).toFixed(1)}g ${lang === 'ar' ? 'متبقية' : 'left'}`
@@ -234,7 +234,7 @@ export const MealGuidanceView: React.FC = () => {
                 </span>
                 <span className="text-slate-500">•</span>
                 <span className="text-slate-300 font-mono text-[11px]">
-                  {lang === 'ar' ? 'سكر الدم:' : 'Glucose:'} <strong className="text-emerald-400">{formatGlucose(currentSugarLevel)}</strong>
+                  {lang === 'ar' ? 'سكر الدم:' : 'Glucose:'} <strong className="text-teal-400">{formatGlucose(currentSugarLevel)}</strong>
                 </span>
               </div>
             </div>
@@ -243,7 +243,7 @@ export const MealGuidanceView: React.FC = () => {
           {/* Quick Log Meal Button */}
           <button
             onClick={() => setIsMealLoggerOpen(true)}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950 active:scale-95 transition-all shrink-0"
+            className="min-h-[36px] px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-teal-950 active:scale-95 transition-all shrink-0"
           >
             <Camera className="w-3.5 h-3.5" />
             <span>{lang === 'ar' ? 'سجل وجبة' : 'Log Meal'}</span>

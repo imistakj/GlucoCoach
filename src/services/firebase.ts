@@ -1,6 +1,18 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, doc, getDocFromServer } from 'firebase/firestore';
-import { getAuth, signInAnonymously, onAuthStateChanged, Auth, User } from 'firebase/auth';
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged,
+  Auth,
+  User,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from 'firebase/auth';
 import firebaseConfigData from '../../firebase-applet-config.json';
 
 const firebaseConfig = {
@@ -54,6 +66,70 @@ export const ensureAuthenticatedUser = async (): Promise<User | null> => {
 
   return authInitPromise;
 };
+
+// Google Provider Instance
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
+
+/**
+ * Sign in using Google Medical SSO Popup
+ */
+export async function loginWithGooglePopup(): Promise<User> {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    currentAuthUser = result.user;
+    return result.user;
+  } catch (error: any) {
+    console.error('Google Sign-In failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Sign in with Email and Password
+ */
+export async function loginWithEmailPassword(email: string, pass: string): Promise<User> {
+  const result = await signInWithEmailAndPassword(auth, email, pass);
+  currentAuthUser = result.user;
+  return result.user;
+}
+
+/**
+ * Register with Email and Password
+ */
+export async function registerWithEmailPassword(
+  email: string,
+  pass: string,
+  displayName: string
+): Promise<User> {
+  const result = await createUserWithEmailAndPassword(auth, email, pass);
+  if (displayName) {
+    await updateProfile(result.user, { displayName });
+  }
+  currentAuthUser = result.user;
+  return result.user;
+}
+
+/**
+ * Sign out
+ */
+export async function logoutFirebase(): Promise<void> {
+  await signOut(auth);
+  currentAuthUser = null;
+  authInitPromise = null;
+}
+
+/**
+ * Subscribe to auth state changes
+ */
+export function onAuthChange(callback: (user: User | null) => void) {
+  return onAuthStateChanged(auth, (user) => {
+    currentAuthUser = user;
+    callback(user);
+  });
+}
 
 // Connection validator as required by skill
 export async function validateFirestoreConnection(): Promise<boolean> {

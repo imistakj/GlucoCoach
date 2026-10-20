@@ -9,6 +9,7 @@
   html {
     font-family: var(--font-latin);
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   html[dir="rtl"], [dir="rtl"] {
@@ -20,27 +21,38 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #0b1120;
+  background-color: #070b12;
   color: #f1f5f9;
   min-height: 100vh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(11, 15, 23, 0.7);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(71, 85, 105, 0.8);
+  background: rgba(51, 65, 85, 0.7);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 1);
+  background: rgba(71, 85, 105, 0.9);
+}
+
+/* Safe area padding utilities for mobile devices */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
 }

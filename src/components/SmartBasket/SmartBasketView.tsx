@@ -62,18 +62,18 @@ export const SmartBasketView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 pb-24 max-w-4xl mx-auto px-4 pt-4">
-      {/* Top Banner / Introduction */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-5 pb-20 max-w-4xl mx-auto px-2 sm:px-4 pt-2 sm:pt-4">
+      {/* Top Banner / Clinical Supermarket Intelligence */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800/90 rounded-2xl p-4 sm:p-5 shadow-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Store className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-semibold text-emerald-400">
-                {lang === 'ar' ? 'الميرة • اللولو • كارفور قطر' : 'Al Meera • Lulu • Carrefour Qatar'}
+              <Store className="w-4 h-4 text-teal-400" />
+              <span className="text-xs font-semibold text-teal-400">
+                {lang === 'ar' ? 'الميرة • اللولو • كارفور قطر • بلدنا' : 'Al Meera • Lulu • Carrefour Qatar • Baladna'}
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
               {t.basketTitle}
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
@@ -81,20 +81,20 @@ export const SmartBasketView: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
             <button
               onClick={() => setIsQRScannerOpen(true)}
-              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs sm:text-sm border border-slate-700 shadow-md transition-all active:scale-95"
+              className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-750 text-teal-300 font-bold text-xs sm:text-sm border border-slate-700/80 shadow-md transition-all active:scale-95"
             >
-              <QrCode className="w-4 h-4" />
-              <span>{lang === 'ar' ? 'فحص رمز QR (السكر والسعرات)' : 'QR Scanner (Calories & Sugar)'}</span>
+              <QrCode className="w-4 h-4 text-teal-400 shrink-0" />
+              <span>{lang === 'ar' ? 'مسح رمز QR الغذائي' : 'QR Nutrition Scanner'}</span>
             </button>
 
             <button
               onClick={() => setIsScannerOpen(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-950 transition-all active:scale-95"
+              className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-teal-950 transition-all active:scale-95"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>{t.scanItemBtn}</span>
             </button>
           </div>
@@ -252,9 +252,9 @@ export const SmartBasketView: React.FC = () => {
                       </h4>
                     </div>
 
-                    {/* Quantity & Remove controls */}
+                    {/* Quantity & Remove controls - Mobile Touch Optimized */}
                     <div className="flex items-center gap-2 shrink-0">
-                      <div className="flex items-center bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+                      <div className="flex items-center bg-slate-800/90 rounded-xl p-1 border border-slate-700">
                         <button
                           onClick={() => {
                             if (item.quantity > 1) {
@@ -263,16 +263,18 @@ export const SmartBasketView: React.FC = () => {
                               removeFromBasket(prod.id);
                             }
                           }}
-                          className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white"
+                          className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white rounded-lg active:bg-slate-700 font-bold text-base transition-colors"
+                          aria-label="Decrease quantity"
                         >
                           -
                         </button>
-                        <span className="px-2 text-xs font-bold text-white">
+                        <span className="px-2.5 text-xs font-mono font-bold text-white tabular-nums">
                           {item.quantity}
                         </span>
                         <button
                           onClick={() => addToBasket(prod, 1)}
-                          className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white"
+                          className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white rounded-lg active:bg-slate-700 font-bold text-base transition-colors"
+                          aria-label="Increase quantity"
                         >
                           +
                         </button>
@@ -280,10 +282,11 @@ export const SmartBasketView: React.FC = () => {
 
                       <button
                         onClick={() => removeFromBasket(prod.id)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
                         title={t.remove}
+                        aria-label={t.remove}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

@@ -50,13 +50,17 @@ export const HighSugarClinicAlertModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-rose-950/80 backdrop-blur-md animate-in fade-in">
-      <div className="bg-slate-900 border-2 border-rose-500 rounded-3xl w-full max-w-lg max-h-[94vh] overflow-y-auto shadow-2xl shadow-rose-950/80 flex flex-col text-slate-100">
-        
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-rose-950/80 backdrop-blur-md animate-in fade-in">
+      <div className="bg-slate-900 border-t-2 sm:border-2 border-rose-500 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl shadow-rose-950/80 flex flex-col text-slate-100">
+        {/* Mobile Drag Handle */}
+        <div className="pt-2 pb-1 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-rose-400/60 rounded-full" />
+        </div>
+
         {/* Pulsing Alert Banner Header */}
-        <div className="bg-gradient-to-r from-rose-700 via-rose-600 to-amber-700 px-5 py-4 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-rose-700 via-rose-600 to-amber-700 px-5 py-3.5 sm:py-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center animate-bounce">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
               <ShieldAlert className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -73,7 +77,8 @@ export const HighSugarClinicAlertModal: React.FC = () => {
 
           <button
             onClick={() => setIsHighSugarAlarmOpen(false)}
-            className="p-1.5 rounded-lg bg-black/20 hover:bg-black/30 text-rose-100 hover:text-white"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/20 hover:bg-black/30 text-rose-100 hover:text-white"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>

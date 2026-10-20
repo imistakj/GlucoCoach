@@ -188,6 +188,21 @@ export const translations = {
     missedMealYesRecord: 'Yes, I ate - Record Meal',
     missedMealNotYetSuggest: 'Not yet - Suggest Low-Sugar Meal',
     missedMealFasting: 'I am fasting / Skipped',
+
+    // Authentication & Patient Portal
+    signIn: 'Sign In',
+    signOut: 'Sign Out',
+    patientPortal: 'Patient Portal',
+    loginWithGoogle: 'Continue with Google',
+    loginWithQatarId: 'Sign in with Qatar ID & Health Card',
+    demoProfiles: 'Demo Patient Fast-Pass',
+    verifiedPatient: 'Verified Patient',
+    cloudSyncActive: 'Cloud Sync Active',
+    switchAccount: 'Switch Patient',
+    authModalTitle: 'Hamad Health & Diabetes Patient Access',
+    authModalSubtitle: 'Biometric records, meal logs, and emergency medical IDs synced securely across devices.',
+    loginSecureNotice: 'Compliant with State of Qatar MoPH Health Data Governance and 256-bit encryption.',
+    guestMode: 'Emergency Paramedic / Guest Mode',
   },
   ar: {
     appName: 'جلوكو كوتش قطر',
@@ -378,5 +393,20 @@ export const translations = {
     missedMealYesRecord: 'نعم تناولت وجبة - سجّل الآن',
     missedMealNotYetSuggest: 'لم آكل بعد - اقترح وجبة صحية',
     missedMealFasting: 'أنا صائم / تخطيت الوجبة',
+
+    // Authentication & Patient Portal
+    signIn: 'تسجيل الدخول',
+    signOut: 'تسجيل الخروج',
+    patientPortal: 'بوابة المريض',
+    loginWithGoogle: 'الدخول عبر حساب Google',
+    loginWithQatarId: 'الدخول بالرقم الشخصي والبطاقة الصحية',
+    demoProfiles: 'الدخول السريع بحسابات تجريبية',
+    verifiedPatient: 'مريض معتمد',
+    cloudSyncActive: 'مزامنة سحابية نشطة',
+    switchAccount: 'تبديل المريض',
+    authModalTitle: 'بوابة الدخول الطبية - صحة قطر والسكري',
+    authModalSubtitle: 'سجلات قياس السكر، الوجبات، وبطاقة الطوارئ الطبية متزامنة بأمان عبر أجهزتك.',
+    loginSecureNotice: 'متوافق مع حوكمة البيانات الصحية لوزارة الصحة العامة في قطر ومعايير التشفير 256-bit.',
+    guestMode: 'وضع مسعفي الطوارئ 999 / زائر',
   },
 };

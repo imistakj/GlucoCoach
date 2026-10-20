@@ -16,6 +16,7 @@ import {
   QatarFoodProvider,
   AutoMealOrderConfig,
   HighSugarAlarmInfo,
+  AppAuthUser,
 } from '../types';
 import { QATAR_SUPERMARKET_PRODUCTS } from '../data/qatarProducts';
 import { QATAR_HEALTHY_MEALS, DUMMY_QATAR_FOOD_PROVIDERS } from '../data/qatarKitchens';
@@ -34,6 +35,15 @@ import {
   exportDatabaseBackup,
   checkDatabaseHealth,
 } from '../services/databaseService';
+import {
+  auth,
+  loginWithGooglePopup,
+  loginWithEmailPassword,
+  registerWithEmailPassword,
+  logoutFirebase,
+  onAuthChange,
+  ensureAuthenticatedUser,
+} from '../services/firebase';
 
 interface AppContextType {
   lang: Language;
@@ -45,6 +55,25 @@ interface AppContextType {
   formatGlucose: (valInMgDl: number) => string;
   activeTab: 'meal' | 'heart' | 'basket' | 'medical-id';
   setActiveTab: (tab: 'meal' | 'heart' | 'basket' | 'medical-id') => void;
+
+  // Patient Portal & Authentication
+  currentUser: AppAuthUser | null;
+  isAuthLoading: boolean;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  isAccountModalOpen: boolean;
+  setIsAccountModalOpen: (open: boolean) => void;
+  loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string, patientName: string) => Promise<void>;
+  loginWithQatarHealthId: (
+    qatarId: string,
+    healthCardNumber: string,
+    patientName?: string,
+    diabeticStatus?: 'pre-diabetes' | 'type-2' | 'preventative' | 'type-1'
+  ) => Promise<void>;
+  loginAsDemoPatient: (profileKey: 'salem' | 'fatima' | 'dr_tariq') => Promise<void>;
+  logout: () => Promise<void>;
 
   // Meal Recording & Next Meal Suggestion Engine
   recordedMeals: RecordedMeal[];
@@ -924,6 +953,260 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+const DEMO_PATIENTS: Record<'salem' | 'fatima' | 'dr_tariq', { profile: UserProfile; auth: AppAuthUser }> = {
+  salem: {
+    profile: defaultProfile,
+    auth: {
+      uid: 'patient-salem-28963401294',
+      displayName: 'Salem Al-Kuwari',
+      email: 'salem.alkuwari@health.qa',
+      qatarId: '28963401294',
+      healthCardNumber: 'HC-9923841',
+      patientType: 'pre-diabetes',
+      loginProvider: 'qatar_health',
+    },
+  },
+  fatima: {
+    profile: {
+      name: 'Fatima Al-Sulaiti',
+      qatarId: '29263408192',
+      healthCardNumber: 'HC-8812490',
+      dob: '1984-11-23',
+      bloodType: 'B+',
+      diabeticStatus: 'type-2',
+      targetDailyAddedSugar: 18,
+      targetDailyCarbs: 100,
+      medications: ['Metformin 850mg (2x daily)', 'Empagliflozin 10mg (morning)'],
+      allergies: ['Sulfonamides'],
+      primaryDoctor: 'Dr. Tariq Al-Kuwari (Hamad Endocrine Division)',
+      healthCenter: 'Rawdat Al Khail Health Center (PHCC)',
+      emergencyContact: {
+        name: 'Abdullah Al-Sulaiti (Husband)',
+        relationship: 'Husband',
+        phone: '+974 6623 9102',
+        notifyOnAmber: true,
+      },
+      chronicConditions: ['Type 2 Diabetes', 'Microalbuminuria (Monitored)'],
+      emergencyNotes: '999 Protocol: Continuous glucose sensor active on left arm. Carries glucagon nasal spray in handbag.',
+      preferredHospital: 'Hamad General Hospital - Emergency Department (Doha)',
+      insulinDependent: false,
+      resuscitationPreference: 'FULL_CODE',
+    },
+    auth: {
+      uid: 'patient-fatima-29263408192',
+      displayName: 'Fatima Al-Sulaiti',
+      email: 'fatima.alsulaiti@health.qa',
+      qatarId: '29263408192',
+      healthCardNumber: 'HC-8812490',
+      patientType: 'type-2',
+      loginProvider: 'qatar_health',
+    },
+  },
+  dr_tariq: {
+    profile: {
+      name: 'Dr. Tariq Al-Kuwari',
+      qatarId: '28063405521',
+      healthCardNumber: 'HMC-84920',
+      dob: '1980-02-14',
+      bloodType: 'A+',
+      diabeticStatus: 'preventative',
+      targetDailyAddedSugar: 30,
+      targetDailyCarbs: 150,
+      medications: ['Multivitamins'],
+      allergies: ['None'],
+      primaryDoctor: 'HMC Senior Consultant Staff',
+      healthCenter: 'Hamad General Hospital - Diabetes & Endocrine Center',
+      emergencyContact: {
+        name: 'HMC Medical Staff Operations',
+        relationship: 'Colleague',
+        phone: '+974 4439 2222',
+        notifyOnAmber: true,
+      },
+      chronicConditions: ['Preventative Health / HMC Clinician Protocol'],
+      emergencyNotes: 'HMC Senior Staff & Emergency Medical Supervisor ID: HMC-84920.',
+      preferredHospital: 'Hamad General Hospital - Trauma & Emergency Center',
+      insulinDependent: false,
+      resuscitationPreference: 'FULL_CODE',
+    },
+    auth: {
+      uid: 'staff-tariq-28063405521',
+      displayName: 'Dr. Tariq Al-Kuwari',
+      email: 'tariq.alkuwari@hamad.qa',
+      qatarId: '28063405521',
+      healthCardNumber: 'HMC-84920',
+      patientType: 'preventative',
+      loginProvider: 'qatar_health',
+    },
+  },
+};
+
+  // Patient Portal & Authentication State
+  const [currentUser, setCurrentUser] = useState<AppAuthUser | null>(() => {
+    const saved = localStorage.getItem('glucocoach_current_auth_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return DEMO_PATIENTS.salem.auth;
+  });
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
+  // Sync Firebase auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthChange((fbUser) => {
+      if (fbUser && !fbUser.isAnonymous) {
+        const authUser: AppAuthUser = {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName: fbUser.displayName || 'Patient',
+          photoURL: fbUser.photoURL,
+          isAnonymous: fbUser.isAnonymous,
+          loginProvider: 'google',
+          qatarId: userProfile.qatarId,
+          healthCardNumber: userProfile.healthCardNumber,
+          patientType: userProfile.diabeticStatus,
+        };
+        setCurrentUser(authUser);
+        localStorage.setItem('glucocoach_current_auth_user', JSON.stringify(authUser));
+      }
+    });
+    return () => unsubscribe();
+  }, [userProfile.qatarId, userProfile.healthCardNumber, userProfile.diabeticStatus]);
+
+  const loginWithGoogle = async () => {
+    setIsAuthLoading(true);
+    try {
+      const fbUser = await loginWithGooglePopup();
+      const authUser: AppAuthUser = {
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: fbUser.displayName || 'Patient',
+        photoURL: fbUser.photoURL,
+        isAnonymous: false,
+        loginProvider: 'google',
+        qatarId: userProfile.qatarId,
+        healthCardNumber: userProfile.healthCardNumber,
+        patientType: userProfile.diabeticStatus,
+      };
+      setCurrentUser(authUser);
+      localStorage.setItem('glucocoach_current_auth_user', JSON.stringify(authUser));
+      if (fbUser.displayName) {
+        updateUserProfile({ name: fbUser.displayName });
+      }
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const loginWithEmail = async (email: string, pass: string) => {
+    setIsAuthLoading(true);
+    try {
+      const fbUser = await loginWithEmailPassword(email, pass);
+      const authUser: AppAuthUser = {
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: fbUser.displayName || email.split('@')[0],
+        isAnonymous: false,
+        loginProvider: 'email',
+        qatarId: userProfile.qatarId,
+        healthCardNumber: userProfile.healthCardNumber,
+        patientType: userProfile.diabeticStatus,
+      };
+      setCurrentUser(authUser);
+      localStorage.setItem('glucocoach_current_auth_user', JSON.stringify(authUser));
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const registerWithEmail = async (email: string, pass: string, patientName: string) => {
+    setIsAuthLoading(true);
+    try {
+      const fbUser = await registerWithEmailPassword(email, pass, patientName);
+      const authUser: AppAuthUser = {
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: patientName || email.split('@')[0],
+        isAnonymous: false,
+        loginProvider: 'email',
+        qatarId: userProfile.qatarId,
+        healthCardNumber: userProfile.healthCardNumber,
+        patientType: userProfile.diabeticStatus,
+      };
+      setCurrentUser(authUser);
+      localStorage.setItem('glucocoach_current_auth_user', JSON.stringify(authUser));
+      if (patientName) {
+        updateUserProfile({ name: patientName });
+      }
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const loginWithQatarHealthId = async (
+    qatarId: string,
+    healthCardNumber: string,
+    patientName?: string,
+    diabeticStatus?: 'pre-diabetes' | 'type-2' | 'preventative' | 'type-1'
+  ) => {
+    setIsAuthLoading(true);
+    try {
+      await ensureAuthenticatedUser();
+      const displayName = patientName || userProfile.name || 'Salem Al-Kuwari';
+      const authUser: AppAuthUser = {
+        uid: 'patient-' + qatarId,
+        email: `${qatarId}@health.gov.qa`,
+        displayName,
+        qatarId,
+        healthCardNumber,
+        patientType: diabeticStatus || userProfile.diabeticStatus,
+        loginProvider: 'qatar_health',
+      };
+      setCurrentUser(authUser);
+      localStorage.setItem('glucocoach_current_auth_user', JSON.stringify(authUser));
+      updateUserProfile({
+        name: displayName,
+        qatarId,
+        healthCardNumber,
+        ...(diabeticStatus ? { diabeticStatus } : {}),
+      });
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const loginAsDemoPatient = async (profileKey: 'salem' | 'fatima' | 'dr_tariq') => {
+    setIsAuthLoading(true);
+    try {
+      const demo = DEMO_PATIENTS[profileKey];
+      if (demo) {
+        setUserProfile(demo.profile);
+        localStorage.setItem('glucocoach_profile', JSON.stringify(demo.profile));
+        setCurrentUser(demo.auth);
+        localStorage.setItem('glucocoach_current_auth_user', JSON.stringify(demo.auth));
+        persistUserProfile(demo.profile);
+      }
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setIsAuthLoading(true);
+    try {
+      await logoutFirebase();
+      setCurrentUser(null);
+      localStorage.removeItem('glucocoach_current_auth_user');
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
   const [databaseConnected, setDatabaseConnected] = useState(true);
 
   // Initial cloud sync & database health check on app mount
@@ -1517,6 +1800,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         exportDatabase,
         isMobileSimulator,
         setIsMobileSimulator,
+        // Patient Portal & Authentication
+        currentUser,
+        isAuthLoading,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        isAccountModalOpen,
+        setIsAccountModalOpen,
+        loginWithGoogle,
+        loginWithEmail,
+        registerWithEmail,
+        loginWithQatarHealthId,
+        loginAsDemoPatient,
+        logout,
       }}
     >
       {children}

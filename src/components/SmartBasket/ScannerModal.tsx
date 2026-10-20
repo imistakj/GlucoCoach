@@ -233,12 +233,17 @@ export const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onProductDe
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
+        {/* Mobile Drag Handle */}
+        <div className="pt-2 pb-1 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-slate-700 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="px-5 py-3.5 sm:py-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center">
               <Camera className="w-4 h-4" />
             </div>
             <h2 className="font-bold text-base text-white">
@@ -247,7 +252,8 @@ export const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onProductDe
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>

@@ -976,7 +976,7 @@ Generated via GlucoCoach Qatar - Ready for PHCC & Nar'aakom Consultation.`;
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        <div className="flex sm:grid sm:grid-cols-7 gap-1.5 sm:gap-2 overflow-x-auto pb-1.5 sm:pb-0">
           {weeklyData.map((d) => {
             const isSelected = selectedDayInfo.date === d.date;
 
@@ -985,9 +985,9 @@ Generated via GlucoCoach Qatar - Ready for PHCC & Nar'aakom Consultation.`;
                 key={d.date}
                 type="button"
                 onClick={() => setSelectedDate(d.date)}
-                className={`p-2.5 rounded-2xl border text-left rtl:text-right transition-all flex flex-col justify-between ${
+                className={`shrink-0 min-w-[76px] sm:min-w-0 flex-1 p-2 sm:p-2.5 rounded-2xl border text-left rtl:text-right transition-all flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-gradient-to-br from-emerald-950/80 to-slate-900 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                    ? 'bg-gradient-to-br from-teal-950/80 to-slate-900 border-teal-500 shadow-md ring-2 ring-teal-500/20'
                     : d.isSpikeDay
                     ? 'bg-rose-950/20 border-rose-800/40 hover:border-rose-700'
                     : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
@@ -997,22 +997,22 @@ Generated via GlucoCoach Qatar - Ready for PHCC & Nar'aakom Consultation.`;
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-bold text-slate-300">{d.dayShort}</span>
                     {d.isSpikeDay ? (
-                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
                     ) : d.whoExceeded ? (
                       <span className="w-2 h-2 rounded-full bg-amber-400" />
                     ) : (
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="w-2 h-2 rounded-full bg-teal-400" />
                     )}
                   </div>
 
-                  <div className="text-xs font-bold text-white">
+                  <div className="text-xs font-mono font-bold text-white tabular-nums">
                     {d.postMealGlucose ? formatGlucose(d.postMealGlucose) : formatGlucose(d.peakGlucose)}
                   </div>
                 </div>
 
-                <div className="pt-2 mt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>{d.addedSugarGrams}g {lang === 'ar' ? 'سكر' : 'sugar'}</span>
-                  <span className={d.whoExceeded ? 'text-amber-400 font-bold' : 'text-emerald-400'}>
+                <div className="pt-1.5 mt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                  <span>{d.addedSugarGrams}g</span>
+                  <span className={d.whoExceeded ? 'text-amber-400 font-bold' : 'text-teal-400'}>
                     {d.whoExceeded ? '⚠️' : '✓'}
                   </span>
                 </div>

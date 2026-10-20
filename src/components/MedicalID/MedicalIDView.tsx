@@ -23,6 +23,9 @@ import {
   Share2,
   Copy,
   Check,
+  LogIn,
+  User,
+  Sparkles,
 } from 'lucide-react';
 
 export const MedicalIDView: React.FC = () => {
@@ -37,6 +40,9 @@ export const MedicalIDView: React.FC = () => {
     recordedMeals,
     dailyCheckIns,
     orders,
+    currentUser,
+    setIsAuthModalOpen,
+    setIsAccountModalOpen,
   } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -117,20 +123,17 @@ export const MedicalIDView: React.FC = () => {
       </div>
 
       {/* CLOUD DATABASE STATUS & RECORDS TELEMETRY BAR */}
-      <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5">
-          <div className="relative flex items-center justify-center">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 relative" />
-          </div>
+          <div className="w-2.5 h-2.5 rounded-full bg-teal-400 shrink-0" />
           <div>
-            <span className="text-white font-bold flex items-center gap-1.5">
-              <span>{lang === 'ar' ? 'قاعدة بيانات المستخدم نشطة ومؤمنة' : 'User Database Active & Synced'}</span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">
-                Firestore
+            <div className="text-white font-bold flex items-center gap-1.5 flex-wrap">
+              <span>{lang === 'ar' ? 'قاعدة بيانات المستخدم نشطة ومؤمنة' : 'User Database Active & Encrypted'}</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-teal-400 border border-slate-700 font-mono">
+                Firestore Cloud
               </span>
-            </span>
-            <span className="text-[11px] text-slate-400 block">
+            </div>
+            <span className="text-[11px] text-slate-400 block mt-0.5">
               {lang === 'ar' ? 'حفظ تلقائي للوجبات ومستويات السكر والملف الطبي' : 'Auto-persisting food intake, blood glucose, and emergency data'}
             </span>
           </div>
@@ -149,6 +152,64 @@ export const MedicalIDView: React.FC = () => {
             <ShieldCheck className="w-3 h-3 text-emerald-400" />
             <span>{lang === 'ar' ? 'ملف 999 مشفّر' : '999 Profile'}</span>
           </span>
+        </div>
+      </div>
+
+      {/* PATIENT PORTAL ACCESS & CLOUD ACCOUNT CARD */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-teal-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center font-bold text-sm shrink-0">
+            {currentUser?.photoURL ? (
+              <img src={currentUser.photoURL} alt="Patient" className="w-full h-full rounded-xl object-cover" />
+            ) : (
+              (currentUser?.displayName || userProfile.name || 'P')[0].toUpperCase()
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-bold text-white">
+                {currentUser?.displayName || userProfile.name}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold font-mono">
+                {currentUser?.loginProvider === 'google'
+                  ? 'Google Medical SSO'
+                  : currentUser?.loginProvider === 'qatar_health'
+                  ? 'Qatar Health Pass'
+                  : 'Patient Account'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5 font-mono">
+              QID: {userProfile.qatarId} · HC: {userProfile.healthCardNumber}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+          {currentUser ? (
+            <button
+              onClick={() => setIsAccountModalOpen(true)}
+              className="flex-1 sm:flex-initial min-h-[38px] px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>{lang === 'ar' ? 'تفاصيل الحساب' : 'Account Details'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex-1 sm:flex-initial min-h-[38px] px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md shadow-teal-950"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>{t.signIn}</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="flex-1 sm:flex-initial min-h-[38px] px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>{lang === 'ar' ? 'تبديل المريض' : 'Switch Patient'}</span>
+          </button>
         </div>
       </div>
 

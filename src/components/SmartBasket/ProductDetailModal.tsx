@@ -53,12 +53,17 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+        {/* Mobile Drag Handle */}
+        <div className="pt-2 pb-1 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-slate-700 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-md px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-md px-5 py-3 sm:py-4 border-b border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-teal-400 uppercase tracking-wider">
               {product.brand}
             </span>
             <h2 className="text-base sm:text-lg font-bold text-white leading-snug">
@@ -67,7 +72,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
@@ -239,11 +245,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
           )}
         </div>
 
-        {/* Footer Actions */}
+        {/* Footer Actions - 44px Touch Target Compliant */}
         <div className="sticky bottom-0 bg-slate-900/95 backdrop-blur-md px-5 py-3.5 border-t border-slate-800 flex items-center justify-between gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+            className="min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
           >
             {t.close}
           </button>
@@ -253,7 +259,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
               addToBasket(product);
               onClose();
             }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-900/30 transition-all active:scale-[0.98]"
+            className="flex-1 flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold shadow-lg shadow-teal-950 transition-all active:scale-[0.98]"
           >
             {isInBasket ? (
               <>
